@@ -1,0 +1,1 @@
+# qiji_compet
