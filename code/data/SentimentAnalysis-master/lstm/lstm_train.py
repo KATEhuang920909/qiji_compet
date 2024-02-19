@@ -71,7 +71,7 @@ def create_dictionaries(model=None,
     if (combined is not None) and (model is not None):
         gensim_dict = Dictionary()
         gensim_dict.doc2bow(model.wv.vocab.keys(),
-                            allow_update=True)
+                            allow_update=False)
         #  freqxiao10->0 所以k+1
         w2indx = {v: k + 1 for k, v in gensim_dict.items()}  # 所有频数超过10的词语的索引,(k->v)=>(v->k)
         w2vec = {word: model[word] for word in w2indx.keys()}  # 所有频数超过10的词语的词向量, (word->model(word))
@@ -99,12 +99,13 @@ def create_dictionaries(model=None,
 
 # 创建词语字典，并返回每个词语的索引，词向量，以及每个句子所对应的词语索引
 def word2vec_train(combined):
-    model = Word2Vec(vector_size=vocab_dim,
+    model = Word2Vec(size=vocab_dim,
                      min_count=n_exposures,
                      window=window_size,
-                     workers=cpu_count)
+                     workers=cpu_count,
+                     iter=n_iterations)
     model.build_vocab(combined)  # input: list
-    model.train(combined, total_examples=len(combined), epochs=50)
+    model.train(combined, total_examples=len(combined),epochs=model.iter)
     model.save('../lstm_data_test/Word2vec_model.pkl')
     index_dict, word_vectors, combined = create_dictionaries(model=model, combined=combined)
     return index_dict, word_vectors, combined
