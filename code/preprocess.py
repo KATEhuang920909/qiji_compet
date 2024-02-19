@@ -128,7 +128,7 @@ def user_vocab(args):
     return words
 
 if __name__ == '__main__':
-    print(char_segment('请看人儿XinShou123'))
+    print(char_segment('天下之大，大但是亻尔缺的那块心眼'))
     # print(word_segment('请看人儿XinShou123'))
 
 
