@@ -8,7 +8,7 @@
 
 class FastTextConfig:
     def __init__(self):
-        self.train_file = 'data/train.txt'
+        self.train_file = 'data/dataset/fasttext_data/train.txt'
         self.test_file = 'data/test.txt'
         self.dev_file = 'data/dev.txt'
 

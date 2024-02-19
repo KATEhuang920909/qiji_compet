@@ -7,19 +7,19 @@
 
 class FastTextConfig:
     def __init__(self):
-        self.train_file = 'data/train.txt'
-        self.test_file = 'data/test.txt'
-        self.dev_file = 'data/dev.txt'
+        self.train_file = 'data/dataset/train.txt'
+        self.test_file = 'data/dataset/test.txt'
+        self.dev_file = 'data/dataset/dev.txt'
 
         self.model_path = 'outputs/fasttext/fasttext_model.bin'
 
-        self.lr = 0.5
-        self.embedding_dim = 200
-        self.epoch = 20
-        self.ngrams = 2
+        self.lr = 0.05
+        self.embedding_dim = 400
+        self.epoch = 10
+        self.ngrams = 3
         self.loss_function = 'softmax'
 
-        self.minCount = 4
+        self.minCount = 1
         self.bucket = 20000
 
 

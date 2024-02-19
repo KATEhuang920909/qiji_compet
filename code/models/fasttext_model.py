@@ -65,3 +65,16 @@ class FastText:
         :return:
         """
         model.save_model(self.model_path)
+
+
+if __name__ == '__main__':
+    with open("../data/dataset/test.txt", encoding="utf8") as f:
+        test = f.readlines()
+        test = [k.strip().split("\t") for k in test]
+    model = fasttext.load_model("../outputs/fasttext/fasttext_model.bin")
+    count = 0
+    for unit in test:
+        if unit[0] != model.predict(unit[1])[0][0]:
+            print(unit[1])
+            count += 1
+    print(count)
