@@ -39,13 +39,17 @@ batch_size = 32
 
 
 def loadfile():
-    neg = pd.read_csv('../data/neg.csv', header=None, index_col=None)
-    pos = pd.read_csv('../data/pos.csv', header=None, index_col=None, on_bad_lines='skip')
-    neu = pd.read_csv('../data/neutral.csv', header=None, index_col=None)
-
-    combined = np.concatenate((pos[0], neu[0], neg[0]))
-    y = np.concatenate((np.ones(len(pos), dtype=int), np.zeros(len(neu), dtype=int),
-                        -1 * np.ones(len(neg), dtype=int)))
+    train = pd.read_excel('../../dataset/multi_cls_data/train_multi.xlsx', )
+    dev = pd.read_excel('../../dataset/multi_cls_data/dev_multi.xlsx', )
+    dic = {'FUCK': 0,
+           'AD': 1,
+           'SEX': 2,
+           'FAKE': 3,
+           'POLITICAL': 4,
+           'NORMAL': 5}
+    data = pd.concat([train, dev])
+    combined = data["content"].values.tolist()
+    y = data["label"].apply(lambda x: dic[x]).values.tolist()
 
     return combined, y
 
@@ -105,7 +109,7 @@ def word2vec_train(combined):
                      workers=cpu_count,
                      iter=n_iterations)
     model.build_vocab(combined)  # input: list
-    model.train(combined, total_examples=len(combined),epochs=model.iter)
+    model.train(combined, total_examples=len(combined), epochs=model.iter)
     model.save('../lstm_data_test/Word2vec_model.pkl')
     index_dict, word_vectors, combined = create_dictionaries(model=model, combined=combined)
     return index_dict, word_vectors, combined
@@ -117,8 +121,8 @@ def get_data(index_dict, word_vectors, combined, y):
     for word, index in index_dict.items():  # 从索引为1的词语开始，对每个词语对应其词向量
         embedding_weights[index, :] = word_vectors[word]
     x_train, x_test, y_train, y_test = train_test_split(combined, y, test_size=0.2)
-    y_train = keras.utils.to_categorical(y_train, num_classes=3)
-    y_test = keras.utils.to_categorical(y_test, num_classes=3)
+    y_train = keras.utils.to_categorical(y_train, num_classes=5)
+    y_test = keras.utils.to_categorical(y_test, num_classes=5)
     # print x_train.shape,y_train.shape
     return n_symbols, embedding_weights, x_train, y_train, x_test, y_test
 
@@ -132,9 +136,9 @@ def train_lstm(n_symbols, embedding_weights, x_train, y_train, x_test, y_test):
                         mask_zero=True,
                         weights=[embedding_weights],
                         input_length=input_length))  # Adding Input Length
-    model.add(LSTM(output_dim=50, activation='tanh'))
+    model.add(LSTM(50, activation='tanh'))
     model.add(Dropout(0.5))
-    model.add(Dense(3, activation='softmax'))  # Dense=>全连接层,输出维度=3
+    model.add(Dense(5, activation='softmax'))  # Dense=>全连接层,输出维度=3
     model.add(Activation('softmax'))
 
     print('Compiling the Model...')
@@ -163,7 +167,8 @@ print('Tokenising...')
 combined = tokenizer(combined)
 print('Training a Word2vec model...')
 index_dict, word_vectors, combined = word2vec_train(combined)
-
+# w2v_model = Word2Vec.load('../lstm_data_test/Word2vec_model.pkl')
+# index_dict, word_vectors, combined = create_dictionaries(model=w2v_model, combined=combined)
 print('Setting up Arrays for Keras Embedding Layer...')
 n_symbols, embedding_weights, x_train, y_train, x_test, y_test = get_data(index_dict, word_vectors, combined, y)
 print("x_train.shape and y_train.shape:")
