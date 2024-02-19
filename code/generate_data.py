@@ -1,8 +1,7 @@
 """
-@Project ：Insult_Recognition
-@File ：generate_data.py
+@File ：ac.py
 @IDE ：PyCharm
-@Author ：wujx
+@Author ：huangkai
 """
 import re
 import csv

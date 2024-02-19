@@ -1,8 +1,7 @@
 """
-@Project ：illegal_context_recognition
-@File ：illegal_check.py
+@File ：ac.py
 @IDE ：PyCharm
-@Author ：wujx
+@Author ：huangkai
 """
 
 from config import SystemConfig, FastTextConfig

@@ -1,8 +1,7 @@
 """
-@Project ：Insult_Recognition
-@File ：train_fasttext.py
+@File ：ac.py
 @IDE ：PyCharm
-@Author ：wujx
+@Author ：huangkai
 """
 from models.fasttext_model import FastText
 from config import FastTextConfig

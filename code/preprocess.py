@@ -1,8 +1,7 @@
 """
-@Project ：Insult_Recognition
-@File ：preprocess.py
+@File ：ac.py
 @IDE ：PyCharm
-@Author ：wujx
+@Author ：huangkai
 """
 import re
 import os

@@ -1,8 +1,7 @@
 """
-@Project ：Insult_Recognition
-@File ：dataset.py
+@File ：ac.py
 @IDE ：PyCharm
-@Author ：wujx
+@Author ：huangkai
 """
 import copy
 import json

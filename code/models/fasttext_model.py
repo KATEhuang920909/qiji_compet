@@ -1,9 +1,7 @@
 """
-@Project ：Insult_Recognition
-@File ：fasttext_model.py
+@File ：ac.py
 @IDE ：PyCharm
-@Author ：wujx
-@Date ：2021/11/16 11:35
+@Author ：huangkai
 """
 import fasttext
 

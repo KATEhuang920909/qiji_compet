@@ -1,9 +1,7 @@
 """
-@Project ：illegal_context_recognition
-@File ：roberta_model.py
+@File ：ac.py
 @IDE ：PyCharm
-@Author ：wujx
-@Date ：2021/11/17 15:11
+@Author ：huangkai
 """
 import torch
 import torch.nn as nn

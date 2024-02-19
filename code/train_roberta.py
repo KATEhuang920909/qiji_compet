@@ -1,8 +1,7 @@
 """
-@Project ：illegal_context_recognition
-@File ：train_roberta.py
+@File ：ac.py
 @IDE ：PyCharm
-@Author ：wujx
+@Author ：huangkai
 """
 import argparse
 import logging

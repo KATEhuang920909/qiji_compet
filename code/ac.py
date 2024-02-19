@@ -1,8 +1,7 @@
 """
-@Project ：illegal_context_recognition
 @File ：ac.py
 @IDE ：PyCharm
-@Author ：wujx
+@Author ：huangkai
 """
 # import ahocorasick
 #

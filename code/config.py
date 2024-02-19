@@ -1,8 +1,7 @@
 """
-@Project ：Insult_Recognition
-@File ：config.py
+@File ：ac.py
 @IDE ：PyCharm
-@Author ：wujx
+@Author ：huangkai
 """
 
 
