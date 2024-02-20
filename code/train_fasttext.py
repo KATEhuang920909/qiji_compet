@@ -34,8 +34,11 @@ def Train():
         # config.test_file = f"data/dataset/test{i}.txt"
         classifier = FastText(config)
         model = classifier.train()
-        Test()
+
         classifier.save_mode(model)
+
+
+        Test()
 
 
 def Test():

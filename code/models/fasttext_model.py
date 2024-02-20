@@ -77,4 +77,4 @@ if __name__ == '__main__':
         if unit[0] != model.predict(unit[1])[0][0]:
             print(unit[1])
             count += 1
-    print(count)
+    print(count,len(test))

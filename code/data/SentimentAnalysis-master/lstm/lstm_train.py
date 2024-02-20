@@ -39,8 +39,8 @@ batch_size = 32
 
 
 def loadfile():
-    train = pd.read_excel('../../dataset/multi_cls_data/train_multi.xlsx', )
-    dev = pd.read_excel('../../dataset/multi_cls_data/dev_multi.xlsx', )
+    train = pd.read_excel('../../dataset/multi_cls_data/train_multi_v2.xlsx', )
+    dev = pd.read_excel('../../dataset/multi_cls_data/dev_multi_v2.xlsx', )
     dic = {'FUCK': 0,
            'AD': 1,
            'SEX': 2,
@@ -120,9 +120,10 @@ def get_data(index_dict, word_vectors, combined, y):
     embedding_weights = np.zeros((n_symbols, vocab_dim))  # 初始化 索引为0的词语，词向量全为0
     for word, index in index_dict.items():  # 从索引为1的词语开始，对每个词语对应其词向量
         embedding_weights[index, :] = word_vectors[word]
-    x_train, x_test, y_train, y_test = train_test_split(combined, y, test_size=0.2)
-    y_train = keras.utils.to_categorical(y_train, num_classes=5)
-    y_test = keras.utils.to_categorical(y_test, num_classes=5)
+    x_train, x_test = combined[:int(0.8 * len(combined))], combined[int(0.8 * len(combined)):]
+    y_train, y_test = y[:int(0.8 * len(y))], y[int(0.8 * len(y)):]
+    y_train = keras.utils.to_categorical(y_train, num_classes=6)
+    y_test = keras.utils.to_categorical(y_test, num_classes=6)
     # print x_train.shape,y_train.shape
     return n_symbols, embedding_weights, x_train, y_train, x_test, y_test
 
@@ -138,7 +139,7 @@ def train_lstm(n_symbols, embedding_weights, x_train, y_train, x_test, y_test):
                         input_length=input_length))  # Adding Input Length
     model.add(LSTM(50, activation='tanh'))
     model.add(Dropout(0.5))
-    model.add(Dense(5, activation='softmax'))  # Dense=>全连接层,输出维度=3
+    model.add(Dense(6, activation='softmax'))  # Dense=>全连接层,输出维度=3
     model.add(Activation('softmax'))
 
     print('Compiling the Model...')
