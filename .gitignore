@@ -3,3 +3,5 @@
 /code/outputs/fasttext/fasttext_model.bin
 /code/data/SentimentAnalysis-master/lstm_data_test/Word2vec_model.pkl
 /code/ir/vector.pkl
+/code/ir/data_pos.txt
+/code/ir/data_neg.txt

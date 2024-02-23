@@ -1,18 +1,5 @@
-# Copyright (c) 2020 PaddlePaddle Authors. All Rights Reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
 import argparse
+import json
 import os
 import random
 import time
@@ -28,17 +15,23 @@ from paddlenlp.transformers import AutoModel, AutoTokenizer, LinearDecayWithWarm
 
 # fmt: off
 parser = argparse.ArgumentParser()
-parser.add_argument("--save_dir", default='./checkpoint', type=str, help="The output directory where the model checkpoints will be written.")
-parser.add_argument("--max_seq_length", default=128, type=int, help="The maximum total input sequence length after tokenization. Sequences longer than this will be truncated, sequences shorter will be padded.")
+parser.add_argument("--save_dir", default='./checkpoint', type=str,
+                    help="The output directory where the model checkpoints will be written.")
+parser.add_argument("--max_seq_length", default=128, type=int,
+                    help="The maximum total input sequence length after tokenization. Sequences longer than this will be truncated, sequences shorter will be padded.")
 parser.add_argument("--batch_size", default=32, type=int, help="Batch size per GPU/CPU for training.")
 parser.add_argument("--learning_rate", default=5e-5, type=float, help="The initial learning rate for Adam.")
 parser.add_argument("--weight_decay", default=0.0, type=float, help="Weight decay if we apply some.")
 parser.add_argument("--epochs", default=3, type=int, help="Total number of training epochs to perform.")
-parser.add_argument("--warmup_proportion", default=0.0, type=float, help="Linear warmup proportion over the training process.")
+parser.add_argument("--warmup_proportion", default=0.0, type=float,
+                    help="Linear warmup proportion over the training process.")
 parser.add_argument("--init_from_ckpt", type=str, default=None, help="The path of checkpoint to be loaded.")
 parser.add_argument("--seed", type=int, default=1000, help="random seed for initialization")
-parser.add_argument('--device', choices=['cpu', 'gpu'], default="gpu", help="Select which device to train model, defaults to gpu.")
+parser.add_argument('--device', choices=['cpu', 'gpu'], default="gpu",
+                    help="Select which device to train model, defaults to gpu.")
 args = parser.parse_args()
+
+
 # fmt: on
 
 
@@ -153,8 +146,12 @@ def do_train():
 
     set_seed(args.seed)
 
-    train_ds, dev_ds = load_dataset("lcqmc", splits=["train", "dev"])
+    def read(data_path):
+        data = json.load(open(data_path, encoding="utf8"))
+        for line in data["data"]:
+            yield ({'text1': line["sen1"], 'text2': line["sen2"], 'label': line["label"]})
 
+    train_ds, dev_ds = load_dataset(read, data_path='chip2019.json', splits=("train", "dev"))
     pretrained_model = AutoModel.from_pretrained("ernie-3.0-medium-zh")
 
     tokenizer = AutoTokenizer.from_pretrained("ernie-3.0-medium-zh")
