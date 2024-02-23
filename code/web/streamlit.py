@@ -3,6 +3,7 @@ import pandas as pd
 from PyPDF2 import PdfReader
 import cv2
 import sys
+
 sys.path.append("../")
 sys.path.append("../utils")
 from commonFileExtractor import Extract_Text_From_File
@@ -40,13 +41,19 @@ tab1, tab2, tab3 = st.tabs(['text', 'document', 'image'])
 
 with tab1:
     '''
-    ```python
-    import cv2
-    image = cv2.imread('image.png')
+    ```text
+    Wise men say only fools rush in but I can't help falling in love with you
     ```
     '''
-    tweet_input = st.text_input('Tweet:')
-    if tweet_input == "text":
+    text = st.text_input('please input text:')
+    if text == "text":
+        """
+        =======================
+        填入文本消息预处理、检测、后处理方法
+        
+        =======================
+        """
+
         st.write("output", "0.99124:red[colors]", )
         st.caption("this is test")
 
@@ -74,7 +81,12 @@ with tab2:
                 text = '\n\n'.join([page.extract_text() for page in pdf_reader.pages])
                 st.write(text)
                 st.write(":red[" + text[100:120] + "]")
+            """
+            =======================
+            填入文本消息预处理、检测、后处理方法
 
+            =======================
+            """
 
         except Exception as e:
             st.write(e)
@@ -90,4 +102,11 @@ with tab3:
         st.image(opencv_image, channels="BGR")
         # 解析图片
         text = "".join(Extract_Text_From_File(opencv_image))
-        st.write(text)
+        """
+        =======================
+        填入文本消息预处理、检测、后处理方法
+
+        =======================
+        """
+        result = text
+        st.write(result)
