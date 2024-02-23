@@ -21,7 +21,7 @@ import paddle.nn as nn
 from paddlenlp.transformers import AutoModel, AutoTokenizer
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--params_path", type=str, default="ernie-1.0", help="The path to model parameters to be loaded.")
+parser.add_argument("--params_path", type=str, default=r"ernie-3.0-medium-zh", help="The path to model parameters to be loaded.")
 parser.add_argument(
     "--output_path", type=str, default="./export", help="The path of model parameter in static graph to be saved."
 )
@@ -87,6 +87,8 @@ if __name__ == "__main__":
     pretrained_model = AutoModel.from_pretrained(args.params_path)
 
     model = SentenceTransformer(pretrained_model)
+    state_dict = paddle.load(r"D:\code\qiji_compet\code\models\match_model\model_state.pdparams")
+    model.set_dict(state_dict)
     model.eval()
 
     input_spec = [

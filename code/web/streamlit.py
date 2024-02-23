@@ -30,7 +30,7 @@ def bytes_to_numpy(image_bytes, channels='BGR'):
 
 # 设置全局属性
 st.set_page_config(
-    page_title='我是标题',
+    page_title='5G消息敏感信息监测系统demo',
     page_icon=' ',
     layout='wide'
 )

@@ -23,10 +23,10 @@ from paddlenlp.transformers import AutoModel, AutoTokenizer
 
 # fmt: off
 parser = argparse.ArgumentParser()
-parser.add_argument("--params_path", type=str, default='./checkpoint/model_2700/model_state.pdparams', help="The path to model parameters to be loaded.")
-parser.add_argument("--max_seq_length", default=50, type=int, help="The maximum total input sequence length after tokenization. Sequences longer than this will be truncated, sequences shorter will be padded.")
+parser.add_argument("--params_path", type=str, default=r'D:\code\qiji_compet\code\models\match_model\model_state.pdparams', help="The path to model parameters to be loaded.")
+parser.add_argument("--max_seq_length", default=128, type=int, help="The maximum total input sequence length after tokenization. Sequences longer than this will be truncated, sequences shorter will be padded.")
 parser.add_argument("--batch_size", default=32, type=int, help="Batch size per GPU/CPU for training.")
-parser.add_argument('--device', choices=['cpu', 'gpu'], default="gpu", help="Select which device to train model, defaults to gpu.")
+parser.add_argument('--device', choices=['cpu', 'gpu'], default="cpu", help="Select which device to train model, defaults to gpu.")
 args = parser.parse_args()
 # fmt: on
 
@@ -145,7 +145,7 @@ if __name__ == "__main__":
     ]
     label_map = {0: "dissimilar", 1: "similar"}
 
-    pretrained_model = AutoModel.from_pretrained("ernie-3.0-medium-zh")
+    pretrained_model = AutoModel.from_pretrained(r"ernie-3.0-medium-zh")
     model = SentenceTransformer(pretrained_model)
 
     if args.params_path and os.path.isfile(args.params_path):
