@@ -2,7 +2,31 @@ import streamlit as st
 import pandas as pd
 from PyPDF2 import PdfReader
 import cv2
+import sys
+sys.path.append("../")
+sys.path.append("../utils")
+from commonFileExtractor import Extract_Text_From_File
 import numpy as np
+
+
+def bytes_to_numpy(image_bytes, channels='BGR'):
+    """
+    图片格式转换 bytes -> numpy
+    args:
+        image_bytes(str): 图片的字节流
+        channels(str): 图片的格式 ['BGR'|'RGB']
+    return(array):
+        转换后的图片
+    """
+    _image_np = np.frombuffer(image_bytes, dtype=np.uint8)
+    image_np = cv2.imdecode(_image_np, cv2.IMREAD_COLOR)
+    if channels == 'BGR':
+        return image_np
+    elif channels == 'RGB':
+        image_np = cv2.cvtColor(image_np, cv2.COLOR_BGR2RGB)
+        return image_np
+
+
 # 设置全局属性
 st.set_page_config(
     page_title='我是标题',
@@ -45,7 +69,7 @@ with tab2:
                 bytes_data = uploaded_file.getvalue().decode("utf8")
                 st.caption(bytes_data[:500] + "...")
                 st.write(":red[" + bytes_data[300:400] + "]")
-            elif name=="pdf":
+            elif name == "pdf":
                 pdf_reader = PdfReader(uploaded_file)
                 text = '\n\n'.join([page.extract_text() for page in pdf_reader.pages])
                 st.write(text)
@@ -65,4 +89,5 @@ with tab3:
         # 展示图片
         st.image(opencv_image, channels="BGR")
         # 解析图片
-        st.write("you are :red[son of bitch ]")
+        text = "".join(Extract_Text_From_File(opencv_image))
+        st.write(text)
