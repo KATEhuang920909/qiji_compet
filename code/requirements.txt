@@ -1,7 +1,0 @@
-PyPDF2
-streamlit
-fitz
-frontend
-paddleocr
-paddlepaddle
-paddlenlp

@@ -6,7 +6,6 @@ import sys
 import requests
 import json
 sys.path.append("../")
-sys.path.append("../utils")
 import numpy as np
 from paddleocr import PaddleOCR
 ocr = PaddleOCR(use_angle_cls=True)
