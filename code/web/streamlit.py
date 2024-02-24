@@ -3,13 +3,13 @@ import pandas as pd
 from PyPDF2 import PdfReader
 import cv2
 import sys
-
+import requests
+import json
 sys.path.append("../")
 sys.path.append("../utils")
-from commonFileExtractor import Extract_Text_From_File
 import numpy as np
-
-
+from paddleocr import PaddleOCR
+ocr = PaddleOCR(use_angle_cls=True)
 def bytes_to_numpy(image_bytes, channels='BGR'):
     """
     图片格式转换 bytes -> numpy
@@ -101,12 +101,15 @@ with tab3:
         # 展示图片
         st.image(opencv_image, channels="BGR")
         # 解析图片
-        text = "".join(Extract_Text_From_File(opencv_image))
+
+        ocr_result = ocr.ocr(opencv_image, cls=True)
+        ocr_result= '\n'.join([line[1][0] for line in ocr_result[0]])
+
         """
         =======================
         填入文本消息预处理、检测、后处理方法
 
         =======================
         """
-        result = text
+        result = ocr_result
         st.write(result)

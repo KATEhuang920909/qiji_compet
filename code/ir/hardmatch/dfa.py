@@ -1,10 +1,13 @@
 
+import os
+current_path = os.getcwd() # 获取当前路径
+parent_path = os.path.dirname(current_path)
 class DFA:
     def __init__(self):
         self.ban_words_set = set()
         self.ban_words_list = list()
         self.ban_words_dict = dict()
-        self.path = 'sensitive_words.txt'
+        self.path = parent_path+r'/dicts/sensitive_words.txt'
         self.get_words()
 
     # 获取敏感词列表

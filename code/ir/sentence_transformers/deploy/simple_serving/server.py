@@ -122,12 +122,14 @@ class TextMatchingPostHandler(BasePostHandler):
         out_dict = {"label": labels, "similarity": probs}
         return out_dict
 
+
 app = SimpleServer()
 app.register(
     task_name="models/text_matching",
-    model_path=r"D:\code\qiji_compet\code\ir\sentence_transformers\export",
+    model_path="../../export_model",
     tokenizer_name="ernie-3.0-medium-zh",
     model_handler=TextMatchingModelHandler,
     post_handler=TextMatchingPostHandler,
     precision="fp32",
+    device_id=0,
 )

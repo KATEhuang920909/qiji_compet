@@ -118,13 +118,13 @@ def predict(model, data, tokenizer, label_map, batch_size=1):
         query_token_type_ids = paddle.to_tensor(query_token_type_ids)
         title_input_ids = paddle.to_tensor(title_input_ids)
         title_token_type_ids = paddle.to_tensor(title_token_type_ids)
-
         probs = model(
             query_input_ids,
             title_input_ids,
             query_token_type_ids=query_token_type_ids,
             title_token_type_ids=title_token_type_ids,
         )
+        print(model.pooling(query_input_ids,query_token_type_ids=query_token_type_ids))
         idx = paddle.argmax(probs, axis=1).numpy()
         idx = idx.tolist()
         labels = [label_map[i] for i in idx]

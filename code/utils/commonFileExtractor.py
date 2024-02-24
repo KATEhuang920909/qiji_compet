@@ -2,7 +2,7 @@ import os
 import fitz  # PyMuPDF
 from paddleocr import PaddleOCR
 import pandas as pd
-from docx import Document
+# from docx import Document
 import time
 
 
