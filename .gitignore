@@ -9,5 +9,7 @@
 /code/ir/softmatch/dev.xlsx
 /code/ir/sentence_transformers/export/
 /code/ir/sentence_transformers/deploy/
-/code/models/
 /code/server/
+/code/ir/softmatch/vector_index
+/code/ir/softmatch/vector.pkl
+/code/ir/softmatch/match_model/
