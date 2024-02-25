@@ -40,7 +40,7 @@ def convert_example(example, tokenizer, max_seq_length=512):
     return query_input_ids, query_token_type_ids  # , title_input_ids, title_token_type_ids
 
 
-def embedding(model, content,  tokenizer,label=None, batch_size=1):
+def embedding(model, content,  tokenizer, batch_size=1):
     examples = []
     if type(content) == str:
         query_input_ids, query_token_type_ids = convert_example(content, tokenizer, max_seq_length=args.max_seq_length)
@@ -56,7 +56,7 @@ def embedding(model, content,  tokenizer,label=None, batch_size=1):
         Pad(axis=0, pad_val=tokenizer.pad_token_type_id),  # query_segment
     ): [data for data in fn(samples)]
     result = np.zeros(shape=(1, 768))
-    for batch in batches:
+    for batch in tqdm(batches):
         query_input_ids, query_token_type_ids = batchify_fn(batch)
 
         query_input_ids = paddle.to_tensor(query_input_ids)
@@ -65,18 +65,7 @@ def embedding(model, content,  tokenizer,label=None, batch_size=1):
 
         result = np.concatenate((result, vector), axis=0)
     result = result.tolist()[1:]
-    if type(content) == str:
-        return {"embedding_result": result}
-    elif type(content) in [list, numpy.ndarray]:
-        content_bag = []
-        for i, (con, lb) in enumerate(zip(content, label)):
-            content_bag.append({"label": lb, "vector": result[i]})
-        content2embed = dict(zip(content, content_bag))  # {content1:{"label":,"vector":},content2:{}...}
-        try:
-            pickle.dump(content2embed, open(r"D:\code\qiji_compet\code\models\vector.pkl", "wb"))
-            return {"embedding_result": "update vector successful"}
-        except Exception as e:
-            return {"embedding_result": str(e)}
+    return {"embedding_result": result}
 #
 # if __name__ == "__main__":
 #     paddle.set_device(args.device)

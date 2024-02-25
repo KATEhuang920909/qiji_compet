@@ -87,3 +87,14 @@ class SentenceTransformer(nn.Layer):
         query_mean = query_sum_embedding / query_sum_mask
 
         return query_mean
+
+    def token_embedding(self,
+                        query_input_ids,
+                        query_token_type_ids=None,
+                        query_position_ids=None,
+                        query_attention_mask=None, ):
+        query_token_embedding, _ = self.ptm(
+            query_input_ids, query_token_type_ids, query_position_ids, query_attention_mask
+        )
+
+        return query_token_embedding
