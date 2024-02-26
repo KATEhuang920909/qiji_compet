@@ -81,7 +81,7 @@ def chang_text():
 def text2embedding():
     if request.method == 'POST':
         text = request.data
-        text = list(eval(text.decode("unicode_escape")).values())[0]  #lists
+        text = list(eval(text.decode("unicode_escape")).values())[0]  # lists
     else:
         text = request.args.get('contents')
     print(text)
@@ -94,7 +94,7 @@ def text2embedding():
 def vector_update():
     file_path = request.args.get('file_path', '')
     save_path = request.args.get('save_path', '')
-    data = pd.read_excel(file_path)[:200]#.sample(n=200)
+    data = pd.read_excel(file_path)[:200]  # .sample(n=200)
     sentences = data["content"].tolist()
     labels = data["label"].tolist()
     result = embedding(model, sentences, tokenizer)["embedding_result"]
@@ -103,7 +103,7 @@ def vector_update():
         content_bag.append({"label": lb, "vector": result[i]})
     content2embed = dict(zip(sentences, content_bag))  # {content1:{"label":,"vector":},content2:{}...}
     try:
-        pickle.dump(content2embed, open(save_path+r"\vector.pkl", "wb"))
+        pickle.dump(content2embed, open(save_path + r"\vector.pkl", "wb"))
         return {"embedding_result": "update vector successful"}
     except Exception as e:
         return {"embedding_result": str(e)}

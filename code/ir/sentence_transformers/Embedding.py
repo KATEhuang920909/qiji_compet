@@ -39,7 +39,7 @@ def convert_example(example, tokenizer, max_seq_length=512):
     return query_input_ids, query_token_type_ids  # , title_input_ids, title_token_type_ids
 
 
-def embedding(model, content,  tokenizer, batch_size=1):
+def embedding(model, content, tokenizer, batch_size=1):
     examples = []
     if type(content) == str:
         query_input_ids, query_token_type_ids = convert_example(content, tokenizer, max_seq_length=args.max_seq_length)
