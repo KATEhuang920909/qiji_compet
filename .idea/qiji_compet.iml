@@ -5,7 +5,7 @@
       <sourceFolder url="file://$MODULE_DIR$/code/data_preprocess" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/code/server/utils" isTestSource="false" />
     </content>
-    <orderEntry type="jdk" jdkName="Python 3.8 (2)" jdkType="Python SDK" />
+    <orderEntry type="jdk" jdkName="Python 3.9" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
 </module>

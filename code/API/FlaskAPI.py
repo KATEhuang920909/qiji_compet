@@ -22,19 +22,19 @@ app = Flask(__name__)
 # hard match model
 dfa = DFA()
 
-# softmatch model
+##### softmatch model
 tokenizer = AutoTokenizer.from_pretrained("ernie-3.0-medium-zh")
 pretrained_model = AutoModel.from_pretrained(r"ernie-3.0-medium-zh")
 model = SentenceTransformer(pretrained_model)
-params_path = "D:\code\qiji_compet\code\ir\softmatch\match_model\model_state.pdparams"
+params_path = "..\ir\softmatch\match_model\model_state.pdparams"
 state_dict = paddle.load(params_path)
 model.set_dict(state_dict)
-# hnsw model
-index_path = r"D:\code\qiji_compet\code\ir\softmatch\vector_index"
+#### hnsw model
+index_path = r"..\ir\softmatch\vector_index.bin"
 index = hnswlib.Index(space='cosine', dim=768)
 index.load_index(index_path)
-file_path = "D:\code\qiji_compet\code\data\dataset\multi_cls_data\dev_multi_v2.xlsx"
-data_init = pd.read_excel(file_path)[:100]
+file_path = "..\data\dataset\multi_cls_data\dev_multi_v2.xlsx"
+data_init = pd.read_excel(file_path)[:200]
 sentences = data_init["content"].values.tolist()
 labels = data_init["label"].values.tolist()
 print("Loaded parameters from %s" % params_path)
@@ -84,6 +84,7 @@ def text2embedding():
         text = list(eval(text.decode("unicode_escape")).values())[0]  #lists
     else:
         text = request.args.get('contents')
+    print(text)
     results = embedding(model, text, tokenizer)
 
     return results
@@ -91,17 +92,18 @@ def text2embedding():
 
 @app.route('/soft_match/vector_update', methods=['POST', 'GET'])
 def vector_update():
-    path = request.args.get('file_path', '')
-    data = pd.read_excel(path)[:100]
+    file_path = request.args.get('file_path', '')
+    save_path = request.args.get('save_path', '')
+    data = pd.read_excel(file_path)[:200]#.sample(n=200)
     sentences = data["content"].tolist()
     labels = data["label"].tolist()
-    result = embedding(model, sentences, tokenizer, label=labels)
+    result = embedding(model, sentences, tokenizer)["embedding_result"]
     content_bag = []
     for i, (con, lb) in enumerate(zip(sentences, labels)):
         content_bag.append({"label": lb, "vector": result[i]})
     content2embed = dict(zip(sentences, content_bag))  # {content1:{"label":,"vector":},content2:{}...}
     try:
-        pickle.dump(content2embed, open(r"D:\code\qiji_compet\code\models\vector.pkl", "wb"))
+        pickle.dump(content2embed, open(save_path+r"\vector.pkl", "wb"))
         return {"embedding_result": "update vector successful"}
     except Exception as e:
         return {"embedding_result": str(e)}
@@ -119,6 +121,7 @@ def Index_Update():
 def Search():
     text = request.args.get('text', '')
     k = int(request.args.get('topk', ''))
+    print(text)
     vector = embedding(model, text, tokenizer)
     print(len(list(vector.values())[0][0]))
     result = search(index, list(vector.values())[0][0], sentences, labels, k)

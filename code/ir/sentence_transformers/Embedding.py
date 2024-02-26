@@ -10,7 +10,6 @@ import argparse
 import numpy
 import numpy as np
 import paddle
-import pickle
 from paddlenlp.data import Pad, Tuple
 from tqdm import tqdm
 
