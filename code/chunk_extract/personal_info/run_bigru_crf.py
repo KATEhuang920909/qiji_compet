@@ -30,7 +30,7 @@ parser.add_argument("--save_dir", default='./bigru_crf_ckpt', type=str,
                     help="The output directory where the model checkpoints will be written.")
 parser.add_argument("--epochs", default=10, type=int, help="Total number of training epochs to perform.")
 parser.add_argument("--batch_size", default=200, type=int, help="Batch size per GPU/CPU for training.")
-parser.add_argument("--device", default="gpu", type=str, choices=["cpu", "gpu"],
+parser.add_argument("--device", default="cpu", type=str, choices=["cpu", "gpu"],
                     help="The device to select to train the model, is must be cpu/gpu.")
 parser.add_argument("--data_dir", default='./data', type=str, help="The folder where the dataset is located.")
 
@@ -132,16 +132,16 @@ if __name__ == "__main__":
 
     print("预训练词向量总数：%d" % len(embeddings))
     print(f"词语'你'的向量是：{embeddings['你']}")
-    print(f"词表的前5个单词：{word_vocab[:5]}")
-    print(f"词表的后5个单词：{word_vocab[-5:]}")
+    print(f"词表的前5个单词：{list(word_vocab.keys())[100:105]}")
+    print(f"词表的后5个单词：{list(word_vocab.keys())[-5:]}")
 
     # 定义词向量的维度，注意与预训练词向量保持一致
     dim = 768
 
     vocab_embeddings = np.zeros((len(word_vocab), dim))
     for ind, word in enumerate(word_vocab):
-        if word != '<unk>':
-            word = word.decode()
+        # if word != '<unk>':
+            # word = word.decode()
         embedding = embeddings.get(word, np.zeros((dim,)))
         vocab_embeddings[ind, :] = embedding
 
