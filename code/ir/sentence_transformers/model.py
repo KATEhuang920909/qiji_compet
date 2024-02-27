@@ -79,8 +79,7 @@ class SentenceTransformer(nn.Layer):
         )
 
         query_mean = paddle.mean(query_token_embedding, axis=1)
-        print(query_token_embedding)
-        return query_token_embedding[:, 0, :]
+        return query_mean
 
     def token_embedding(self,
                         query_input_ids,
