@@ -25,7 +25,7 @@ from paddlenlp.utils.log import logger
 parser = argparse.ArgumentParser(__doc__)
 parser.add_argument("--model_dir", type=str, default="./output", help="The path to parameters in static graph.")
 parser.add_argument(
-    "--data_dir", type=str, default="./waybill_ie/data", help="The folder where the dataset is located."
+    "--data_dir", type=str, default="./data", help="The folder where the dataset is located."
 )
 parser.add_argument("--batch_size", type=int, default=200, help="The number of sequences contained in a mini-batch.")
 parser.add_argument(
@@ -108,7 +108,6 @@ def parse_decodes(sentences, predictions, lengths, label_vocab):
     outputs = []
     for idx, end in enumerate(lengths):
         sent = sentences[idx][:end]
-        print(predictions[idx][:end])
         tags = [id_label[x] for x in predictions[idx][:end]]
         sent_out = []
         tags_out = []
@@ -156,7 +155,7 @@ class Predictor(object):
     def __init__(
         self,
         model_dir,
-        device="gpu",
+        device="cpu",
         batch_size=200,
         use_tensorrt=False,
         precision="fp32",
@@ -249,7 +248,6 @@ class Predictor(object):
                 self.autolog.times.stamp()
             # Drop CLS prediction
             all_preds.append(preds)
-            print(preds.shape)
             all_lens.append(lens)
 
             start_idx += self.batch_size
