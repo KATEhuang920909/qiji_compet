@@ -45,7 +45,7 @@ with table1:
         ```
         '''
         text = st.text_input('please input text:',key=0)
-        if text == "text":
+        if text :
             """
             =======================
             填入文本消息预处理、检测、后处理方法
