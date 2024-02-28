@@ -239,6 +239,7 @@ class Predictor(object):
             if args.benchmark:
                 self.autolog.times.stamp()
             input_ids, lens = batchify_fn(batch_data)
+            print(input_ids)
             self.input_handles[0].copy_from_cpu(input_ids)
             self.input_handles[1].copy_from_cpu(lens)
             self.predictor.run()
@@ -281,8 +282,10 @@ if __name__ == "__main__":
         args.benchmark,
         args.save_log_path,
     )
-
+    import time
+    t1=time.time()
     results = predictor.predict(test_ds, batchify_fn, word_vocab, label_vocab)
     print("\n".join(results))
+    print(time.time()-t1)
     if args.benchmark:
         predictor.autolog.report()

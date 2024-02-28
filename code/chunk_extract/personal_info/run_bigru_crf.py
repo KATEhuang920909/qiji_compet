@@ -154,6 +154,8 @@ if __name__ == "__main__":
     step = 0
     for epoch in range(args.epochs):
         for token_ids, lengths, label_ids in train_loader:
+            print(token_ids)
+            print(lengths)
             loss = model(token_ids, lengths, label_ids)
             loss = loss.mean()
             loss.backward()

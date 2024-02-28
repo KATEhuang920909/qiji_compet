@@ -59,7 +59,6 @@ if __name__ == "__main__":
         model.set_dict(state_dict)
         print("Loaded parameters from %s" % args.params_path)
     model.eval()
-
     model = paddle.jit.to_static(
         model,
         input_spec=[

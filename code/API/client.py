@@ -34,15 +34,16 @@ import requests
 # print(result_json)
 
 # search
-text = "垃圾"
-# url = f"http://127.0.0.1:4567/soft_match/text2embedding?contents={text}"
+text ="你是谁qwertyuiop"
+embedding_type="sequence"
+url = f"http://127.0.0.1:4567/soft_match/text2embedding?contents={text}&embedding_type={embedding_type}"
+r = requests.get(url=url)
+result_json = json.loads(r.text)
+print(len(result_json["embedding_result"][0]))
+
+# topk = 5
+# url = f"http://127.0.0.1:4567/soft_match/search?text={text}&topk={topk}"
 # r = requests.get(url=url)
+# print(r.text)
 # result_json = json.loads(r.text)
 # print(result_json)
-
-topk = 5
-url = f"http://127.0.0.1:4567/soft_match/search?text={text}&topk={topk}"
-r = requests.get(url=url)
-print(r.text)
-result_json = json.loads(r.text)
-print(result_json)

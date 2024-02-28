@@ -79,14 +79,18 @@ def chang_text():
 # ===============soft match====================
 @app.route('/soft_match/text2embedding', methods=['POST', 'GET'])
 def text2embedding():
-    if request.method == 'POST':
-        text = request.data
-        text = list(eval(text.decode("unicode_escape")).values())[0]  # lists
-    else:
-        text = request.args.get('contents')
-    print(text)
-    results = embedding(model, text, tokenizer)
-
+    # if request.method == 'POST':
+    #     text = request.data
+    #     text = list(eval(text.decode("unicode_escape")).values())[0]  # lists
+    # else:
+    text = request.args.get('contents')
+    embedding_type = request.args.get('embedding_type')
+    try:
+        text = eval(text)
+    except:
+        pass
+    results = embedding(model, text, tokenizer, embedding_type)
+    print(results)
     return results
 
 
