@@ -78,6 +78,10 @@ def predict(model, data_loader, ds, label_vocab):
 
 
 if __name__ == "__main__":
+
+    from paddlenlp.transformers import AutoModel, AutoTokenizer, LinearDecayWithWarmup
+    from model import SentenceTransformer
+    from SentenceTransformer.model import SentenceTransformer
     paddle.set_device(args.device)
 
     # Create dataset, tokenizer and dataloader.
@@ -117,8 +121,20 @@ if __name__ == "__main__":
         dataset=test_ds, batch_size=args.batch_size, return_list=True, collate_fn=batchify_fn
     )
 
-    # Define the model netword and its loss
-    ernie = AutoModelForTokenClassification.from_pretrained("ernie-3.0-medium-zh", num_labels=len(label_vocab))
+    tokenizer = AutoTokenizer.from_pretrained("ernie-3.0-medium-zh")
+
+    data = ["你是谁", "你是谁呀"]
+
+    pretrained_model = AutoModel.from_pretrained(r"ernie-3.0-medium-zh")
+    model = SentenceTransformer(pretrained_model)
+    if args.params_path and os.path.isfile(args.params_path):
+        state_dict = paddle.load(args.params_path)
+        model.set_dict(state_dict)
+        print("Loaded parameters from %s" % args.params_path)
+    else:
+        raise ValueError("Please set --params_path with correct pretrained model file")
+    ernie=model.ptm
+
     model = ErnieCrfForTokenClassification(ernie)
 
     metric = ChunkEvaluator(label_list=label_vocab.keys(), suffix=True)

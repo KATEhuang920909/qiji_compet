@@ -20,7 +20,7 @@ from paddlenlp.data import Pad, Tuple
 from tqdm import tqdm
 from paddlenlp.transformers import AutoModel, AutoTokenizer
 import sys
-sys.path.append("../../ir/sentence_transformers")
+sys.path.append("../../ir/SentenceTransformer")
 from Embedding import convert_example,embedding
 from model import SentenceTransformer
 from tqdm import tqdm

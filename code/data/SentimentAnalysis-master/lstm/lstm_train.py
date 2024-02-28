@@ -31,7 +31,7 @@ vocab_dim = 100
 n_iterations = 1  # ideally more..
 n_exposures = 10  # 所有频数超过10的词语
 window_size = 7
-n_epoch = 4
+n_epoch = 2
 input_length = 100
 maxlen = 100
 
@@ -153,8 +153,8 @@ def train_lstm(n_symbols, embedding_weights, x_train, y_train, x_test, y_test):
     score = model.evaluate(x_test, y_test,
                            batch_size=batch_size)
 
-    yaml_string = model.to_yaml()
-    with open('../model/lstm.yml', 'w') as outfile:
+    yaml_string = model.to_json()
+    with open('../model/lstm.json', 'w') as outfile:
         outfile.write(yaml.dump(yaml_string, default_flow_style=True))
     model.save_weights('../model/lstm.h5')
     print('Test score:', score)
@@ -167,9 +167,9 @@ print(len(combined), len(y))
 print('Tokenising...')
 combined = tokenizer(combined)
 print('Training a Word2vec model...')
-index_dict, word_vectors, combined = word2vec_train(combined)
-# w2v_model = Word2Vec.load('../lstm_data_test/Word2vec_model.pkl')
-# index_dict, word_vectors, combined = create_dictionaries(model=w2v_model, combined=combined)
+# index_dict, word_vectors, combined = word2vec_train(combined)
+w2v_model = Word2Vec.load('../lstm_data_test/Word2vec_model.pkl')
+index_dict, word_vectors, combined = create_dictionaries(model=w2v_model, combined=combined)
 print('Setting up Arrays for Keras Embedding Layer...')
 n_symbols, embedding_weights, x_train, y_train, x_test, y_test = get_data(index_dict, word_vectors, combined, y)
 print("x_train.shape and y_train.shape:")

@@ -7,8 +7,8 @@
 /code/ir/softmatch/data_neg.txt
 /code/ir/softmatch/data_pos.txt
 /code/ir/softmatch/dev.xlsx
-/code/ir/sentence_transformers/export/
-/code/ir/sentence_transformers/deploy/
+/code/ir/SentenceTransformer/export/
+/code/ir/SentenceTransformer/deploy/
 /code/server/
 /code/ir/softmatch/vector_index
 /code/ir/softmatch/vector.pkl

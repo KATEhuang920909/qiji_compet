@@ -3,7 +3,7 @@ import sys
 
 sys.path.append("../")
 sys.path.append("../ir/hardmatch")
-sys.path.append("../ir/sentence_transformers")
+sys.path.append("../ir/SentenceTransformer")
 sys.path.append("../ir/softmatch")
 from Embedding import embedding
 from dfa import DFA
