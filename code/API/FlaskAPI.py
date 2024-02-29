@@ -1,10 +1,17 @@
 from flask import Flask, request
 import sys
+import os
 
 sys.path.append("../")
 sys.path.append("../ir/hardmatch")
 sys.path.append("../ir/SentenceTransformer")
 sys.path.append("../ir/softmatch")
+sys.path.append("../chunk_extract/personal_info")
+
+current_path = os.getcwd()  # 获取当前路径
+parent_path = os.path.dirname(current_path)
+print(current_path)
+exit()
 from Embedding import embedding
 from dfa import DFA
 import json
@@ -15,7 +22,11 @@ import pandas as pd
 import hnswlib
 from paddlenlp.transformers import AutoModel, AutoTokenizer
 import numpy as np
+
+from paddlenlp.data import Pad, Stack, Tuple
+from predict_bigru_crf import load_dict, convert_to_features, Predictor, args
 import pickle
+from functools import partial
 
 app = Flask(__name__)
 
@@ -26,33 +37,51 @@ dfa = DFA()
 tokenizer = AutoTokenizer.from_pretrained("ernie-3.0-medium-zh")
 pretrained_model = AutoModel.from_pretrained(r"ernie-3.0-medium-zh")
 model = SentenceTransformer(pretrained_model)
-params_path = "..\ir\softmatch\match_model\model_state.pdparams"
+params_path = parent_path + "\ir\softmatch\match_model\model_state.pdparams"
 state_dict = paddle.load(params_path)
 model.set_dict(state_dict)
-#### hnsw model
-index_path = r"..\ir\softmatch\vector_index.bin"
+
+## hnsw model
+index_path = parent_path + r"\ir\softmatch\vector_index.bin"
 index = hnswlib.Index(space='cosine', dim=768)
 index.load_index(index_path)
-file_path = "..\data\dataset\multi_cls_data\dev_multi_v2.xlsx"
-data_init = pd.read_excel(file_path)[:200]
+file_path = parent_path + r"\data\dataset\multi_cls_data\train_multi_v2.xlsx"
+data_init = pd.read_excel(file_path)[:100]
 sentences = data_init["content"].values.tolist()
 labels = data_init["label"].values.tolist()
 print("Loaded parameters from %s" % params_path)
+
+## chunk extract model
+label_vocab = load_dict(parent_path + r"\chunk_extract\personal_info\data\tag.dic")
+word_vocab = load_dict(parent_path + r"\chunk_extract\personal_info\data\word.dic")
+predictor = Predictor(parent_path + r"\chunk_extract\personal_info\output",
+                      args.device,
+                      args.batch_size,
+                      args.use_tensorrt,
+                      args.precision,
+                      args.enable_mkldnn,
+                      args.benchmark,
+                      args.save_log_path,
+                      )
 
 
 # ===============hard match====================
 @app.route('/hard_match/filter', methods=['POST', 'GET'])
 def text_filter():
-    string = request.args.get('word', '')
+    string = request.args.get('contents', '')
     response_dict = dict()
+    print("string", string)
     if dfa.exists(string) is False:
         response_dict['is_illegal'] = False
+        position = []
     else:
         response_dict['is_illegal'] = True
-        string = dfa.filter_all(string)
-    response_dict['string'] = string
-    response = json.dumps(response_dict)
-    return response
+        position = dfa.filter_all(string)
+    response_dict['position'] = position
+    print("response_dict", response_dict)
+
+    # response = json.dumps(response_dict)
+    return response_dict
 
 
 @app.route('/hard_match/add', methods=['POST', 'GET'])
@@ -98,7 +127,7 @@ def text2embedding():
 def vector_update():
     file_path = request.args.get('file_path', '')
     save_path = request.args.get('save_path', '')
-    data = pd.read_excel(file_path)[:200]  # .sample(n=200)
+    data = pd.read_excel(file_path)[:100]  # .sample(n=200)
     sentences = data["content"].tolist()
     labels = data["label"].tolist()
     result = embedding(model, sentences, tokenizer)["embedding_result"]
@@ -130,6 +159,27 @@ def Search():
     print(len(list(vector.values())[0][0]))
     result = search(index, list(vector.values())[0][0], sentences, labels, k)
     return result
+
+
+# ===============soft match====================
+@app.route('/ner/person_info_check', methods=['POST', 'GET'])
+def ner_predict():
+    # if request.method == 'POST':
+    #     text = request.data
+    #     text = list(eval(text.decode("unicode_escape")).values())[0]  # lists
+    # else:
+    text = request.args.get('contents')
+    if text.strip():
+        text=text.strip()
+        token_id,len_token_id=convert_to_features(text,word_vocab)
+
+    try:
+        text = eval(text)
+    except:
+        pass
+    results = embedding(model, text, tokenizer, embedding_type)
+    print(results)
+    return results
 
 
 if __name__ == '__main__':

@@ -1,4 +1,4 @@
-import dfa
+from dfa import DFA
 # 创建一个dfa对象
 dfa = DFA()
 
@@ -13,10 +13,10 @@ print(s2)
 
 # 检查是否存在敏感词,存在返回True,不存在返回False,不改变字符串
 dfa.exists(s1)
-
-# 添加敏感词
-s = 'sb'
-dfa.add_new_word(s)
-
-# 指定新的敏感词库
-dfa.change_words(path)
+#
+# # 添加敏感词
+# s = 'sb'
+# dfa.add_new_word(s)
+#
+# # 指定新的敏感词库
+# dfa.change_words(path)

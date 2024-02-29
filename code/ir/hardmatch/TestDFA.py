@@ -77,6 +77,7 @@ if __name__ == '__main__':
     # txt="你这婊子，真是个婊子"
     # pos_list = list()
     # ss = dfa.find_illegal(txt)
-    s = "打倒中共共产党，法轮功万岁，妈卖批也。。。。"
+    #
+    s = "打倒中共共产党，打倒中共,这个法轮功万岁，妈卖批也。。。。"
     print(dfa.filter_all(s))
     # print(test_filter_sentence)

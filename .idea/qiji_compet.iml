@@ -4,6 +4,9 @@
     <content url="file://$MODULE_DIR$">
       <sourceFolder url="file://$MODULE_DIR$/code/data_preprocess" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/code/server/utils" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/code" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/code/utils" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/code/chunk_extract/personal_info" isTestSource="false" />
     </content>
     <orderEntry type="jdk" jdkName="Python 3.9" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />

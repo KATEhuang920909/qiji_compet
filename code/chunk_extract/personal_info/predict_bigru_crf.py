@@ -1,25 +1,11 @@
-# Copyright (c) 2022 PaddlePaddle Authors. All Rights Reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
 import argparse
 import os
 from functools import partial
-
+from paddlenlp.data import Pad, Stack, Tuple
+from paddlenlp.datasets import load_dataset
 import paddle
 from paddle import inference
 
-from paddlenlp.data import Pad, Stack, Tuple
-from paddlenlp.datasets import load_dataset
 from paddlenlp.utils.log import logger
 
 parser = argparse.ArgumentParser(__doc__)
@@ -153,15 +139,15 @@ def read(data_path):
 
 class Predictor(object):
     def __init__(
-        self,
-        model_dir,
-        device="cpu",
-        batch_size=200,
-        use_tensorrt=False,
-        precision="fp32",
-        enable_mkldnn=False,
-        benchmark=False,
-        save_log_path="",
+            self,
+            model_dir,
+            device="cpu",
+            batch_size=200,
+            use_tensorrt=False,
+            precision="fp32",
+            enable_mkldnn=False,
+            benchmark=False,
+            save_log_path="",
     ):
         self.batch_size = batch_size
         model_file = os.path.join(model_dir, "inference.pdmodel")
@@ -255,23 +241,34 @@ class Predictor(object):
 
         if args.benchmark:
             self.autolog.times.end(stamp=True)
-        sentences = [example[0] for example in dataset.data]
+        sentences = [example[0] for example in dataset]
         results = parse_decodes(sentences, all_preds, all_lens, label_vocab)
+        return results
+
+    def predict_single(self, text, input_ids, lens, label_vocab):
+        print(input_ids)
+        self.input_handles[0].copy_from_cpu(input_ids)
+        self.input_handles[1].copy_from_cpu(lens)
+        self.predictor.run()
+        preds = self.output_handle.copy_to_cpu()
+
+        results = parse_decodes(text, preds, lens, label_vocab)
         return results
 
 
 if __name__ == "__main__":
-    test_ds = load_dataset(read, data_path=os.path.join(args.data_dir, "test.txt"), lazy=False)
+    # test_ds = load_dataset(read, data_path=os.path.join(args.data_dir, "test.txt"), lazy=False)
+    text = "你是谁"
     label_vocab = load_dict(os.path.join(args.data_dir, "tag.dic"))
+
     word_vocab = load_dict(os.path.join(args.data_dir, "word.dic"))
 
-    trans_func = partial(convert_to_features, word_vocab=word_vocab)
+    token_ids = [convert_tokens_to_ids(text, word_vocab, "OOV")]
+    len_token_ids = [[len(token_ids)]]
 
-    batchify_fn = lambda samples, fn=Tuple(
-        Pad(axis=0, pad_val=word_vocab.get("OOV", 0), dtype="int64"),  # token_ids
-        Stack(dtype="int64"),  # seq_len
-    ): fn(samples)
-
+    token_ids = Pad(axis=0, pad_val=word_vocab.get("OOV", 0), dtype="int64")(token_ids)  # token_ids
+    len_token_ids = Stack(dtype="int64")(len_token_ids)
+    print(token_ids, len_token_ids)
     predictor = Predictor(
         args.model_dir,
         args.device,
@@ -282,10 +279,16 @@ if __name__ == "__main__":
         args.benchmark,
         args.save_log_path,
     )
-    import time
-    t1=time.time()
-    results = predictor.predict(test_ds, batchify_fn, word_vocab, label_vocab)
+    # import time
+    #
+    # t1 = time.time()
+    # print(test_ds)
+    batchify_fn = lambda samples, fn=Tuple(
+        Pad(axis=0, pad_val=word_vocab.get("OOV", 0), dtype="int32"),  # token_ids
+        Stack(dtype="int64"),  # seq_len
+    ): fn(samples)
+    results = predictor.predict([["黑龙江省双鸭山市尖山区八马路与东平行路交叉口北40米", 3]], batchify_fn, word_vocab, label_vocab)
     print("\n".join(results))
-    print(time.time()-t1)
-    if args.benchmark:
-        predictor.autolog.report()
+    # print(time.time() - t1)
+    # if args.benchmark:
+    #     predictor.autolog.report()

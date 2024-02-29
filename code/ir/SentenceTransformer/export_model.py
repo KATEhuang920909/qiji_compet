@@ -37,15 +37,15 @@ class SentenceTransformer(nn.Layer):
         self.classifier = nn.Linear(self.ptm.config["hidden_size"] * 3, 2)
 
     def forward(
-        self,
-        query_input_ids,
-        title_input_ids,
-        query_token_type_ids=None,
-        query_position_ids=None,
-        query_attention_mask=None,
-        title_token_type_ids=None,
-        title_position_ids=None,
-        title_attention_mask=None,
+            self,
+            query_input_ids,
+            title_input_ids,
+            query_token_type_ids=None,
+            query_position_ids=None,
+            query_attention_mask=None,
+            title_token_type_ids=None,
+            title_position_ids=None,
+            title_attention_mask=None,
     ):
         query_token_embedding, _ = self.ptm(
             query_input_ids, query_token_type_ids, query_position_ids, query_attention_mask
@@ -63,7 +63,6 @@ class SentenceTransformer(nn.Layer):
         title_token_embedding, _ = self.ptm(
             title_input_ids, title_token_type_ids, title_position_ids, title_attention_mask
         )
-        title_token_embedding = self.dropout(title_token_embedding)
         title_attention_mask = paddle.unsqueeze(
             (title_input_ids != self.ptm.pad_token_id).astype(self.ptm.pooler.dense.weight.dtype), axis=2
         )
@@ -80,6 +79,30 @@ class SentenceTransformer(nn.Layer):
 
         return logits
 
+    def pooling(self,
+                query_input_ids,
+                query_token_type_ids=None,
+                query_position_ids=None,
+                query_attention_mask=None, ):
+        query_token_embedding, _ = self.ptm(
+            query_input_ids, query_token_type_ids, query_position_ids, query_attention_mask
+        )
+
+        query_mean = paddle.mean(query_token_embedding, axis=1)
+        return query_mean
+
+    def token_embedding(self,
+                        query_input_ids,
+                        query_token_type_ids=None,
+                        query_position_ids=None,
+                        query_attention_mask=None, ):
+        query_token_embedding, _ = self.ptm(
+            query_input_ids, query_token_type_ids, query_position_ids, query_attention_mask
+        )
+
+        return query_token_embedding
+
+
 
 if __name__ == "__main__":
 
@@ -87,7 +110,7 @@ if __name__ == "__main__":
     pretrained_model = AutoModel.from_pretrained(args.params_path)
 
     model = SentenceTransformer(pretrained_model)
-    state_dict = paddle.load(r"D:\code\qiji_compet\code\models\match_model\model_state.pdparams")
+    state_dict = paddle.load(r"..\softmatch\match_model\model_state.pdparams")
     model.set_dict(state_dict)
     model.eval()
 
@@ -99,5 +122,5 @@ if __name__ == "__main__":
     model = paddle.jit.to_static(model, input_spec=input_spec)
 
     # Save in static graph model.
-    save_path = os.path.join(args.output_path, "float32")
+    save_path = os.path.join(args.output_path, "match_model")
     paddle.jit.save(model, save_path)

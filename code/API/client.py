@@ -18,32 +18,41 @@ import requests
 # result_json = json.loads(r.text)
 # print(result_json)
 
-# 获取向量库
-# file_path=r"D:\work\QiJi\qiji_compet\code\data\dataset\multi_cls_data\train_multi_v2.xlsx"
-# save_path=r"D:\work\QiJi\qiji_compet\code\ir\softmatch"
+# # 获取向量库
+# file_path=r"D:\work\QIJI\qiji_compet\code\data\dataset\multi_cls_data\train_multi_v2.xlsx"
+# save_path=r"D:\work\QIJI\qiji_compet\code\ir\softmatch"
 # url = fr"http://127.0.0.1:4567/soft_match/vector_update?file_path={file_path}&save_path={save_path}"
 # r = requests.get(url=url)
 # result_json = json.loads(r.text)
 # print(result_json)
-
-# 获取索引库
-# save_path=r"D:\work\QiJi\qiji_compet\code\ir\softmatch\vector.pkl"
+# #
+# # 获取索引库
+# save_path=r"D:\work\QIJI\qiji_compet\code\ir\softmatch\vector.pkl"
 # url = fr"http://127.0.0.1:4567/soft_match/index_update?vector_path={save_path}"
 # r = requests.get(url=url)
 # result_json = json.loads(r.text)
 # print(result_json)
 
 # search
-text ="你是谁qwertyuiop"
-embedding_type="sequence"
-url = f"http://127.0.0.1:4567/soft_match/text2embedding?contents={text}&embedding_type={embedding_type}"
-r = requests.get(url=url)
-result_json = json.loads(r.text)
-print(len(result_json["embedding_result"][0]))
-
+text ="thjkgjkjyttrhtjew"
+# embedding_type="sequence"
+# url = f"http://127.0.0.1:4567/soft_match/text2embedding?contents={text}&embedding_type={embedding_type}"
+# r = requests.get(url=url)
+# result_json = json.loads(r.text)
+# print(len(result_json["embedding_result"][0]))
+# text ="你妈卖批"
 # topk = 5
 # url = f"http://127.0.0.1:4567/soft_match/search?text={text}&topk={topk}"
 # r = requests.get(url=url)
 # print(r.text)
 # result_json = json.loads(r.text)
 # print(result_json)
+
+# text ="你是谁qwertyuiop"
+text ="打倒中共共产党，打倒中共,这个法轮功万岁，妈卖批也。。。。"
+# embedding_type="sequence"
+url = f"http://127.0.0.1:4567/hard_match/filter?contents={text}"
+r = requests.get(url=url)
+print(r.text)
+result_json = json.loads(r.text)
+print(result_json)
