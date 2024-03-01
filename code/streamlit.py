@@ -9,7 +9,7 @@ from collections import Counter
 
 sys.path.append("../")
 sys.path.append("./utils")
-sys.path.append("../chunk_extract/negative_info")
+sys.path.append("./chunk_extract/negative_info")
 import numpy as np
 from paddleocr import PaddleOCR
 import json
@@ -50,23 +50,44 @@ def postprocess(soft_match_result):
     return final_label, final_score
 
 
-def RUN_SOP(contents: str, ):  #
+def merge_intervals(intervals):
+    intervals.sort()  # 先按起始位置从小到大排序
+
+    merged = []
+    for interval in intervals:
+        if not merged or interval[0] > merged[-1][1]:
+            merged.append(interval)  # 如果当前区间与已有结果集最后一个区间不重叠，则直接添加到结果集
+        else:
+            merged[-1][1] = max(merged[-1][1], interval[1])  # 否则更新已有结果集最后一个区间的右边界为两者之间较大值
+
+    return merged
+
+
+def RUN_SOP(contents: str, ) -> dict:  #
     # 数据清洗
+    final_result = {}
     text_bag = datahelper.text_chunk(contents)  # list
-    for text in text_bag:
+    for i, text in enumerate(text_bag):
         #
+
         # ner检测（隐私抽取）
-        url = f"http://127.0.0.1:4567/ner/person_info_check?contents={text}"
-        r = requests.get(url=url)
-        print(r.text)
-        ner_result_json = json.loads(r.text)
+        # url = f"http://127.0.0.1:4567/ner/person_info_check?contents={text}"
+        # r = requests.get(url=url)
+        # print(r.text)
+        # ner_result_json = json.loads(r.text)  ## 待定
         # {'ner_result': ["('打倒中共共产党，打倒中共,这个法轮功万岁，妈卖批也。。。。', 'A1')"]}
+
         # 硬匹配
         url = f"http://127.0.0.1:4567/hard_match/filter?contents={text}"
         r = requests.get(url=url)
         hard_match_result_json = json.loads(r.text)
         # {'is_illegal': True, 'position': [[0, 4, '反动'], [7, 11, '反动'], [13, 15, '暴恐']]}
-        if hard_match_result_json['is_illegal'] is False:
+        if hard_match_result_json['is_illegal'] is True:
+            final_result[i] = {"text": text,
+                               "is_illegal": hard_match_result_json["is_illegal"],
+                               "position": [k[:2] for k in hard_match_result_json["position"]],
+                               "label": ",".join([k[-1] for k in hard_match_result_json["position"]])}
+        else:
             # 软匹配（向量检索）：
             topk = 5
             url = f"http://127.0.0.1:4567/soft_match/search?text={text}&topk={topk}"
@@ -81,16 +102,28 @@ def RUN_SOP(contents: str, ):  #
             # ['来没来给我回个信', 'NORMAL', 0.03790527582168579]]}
 
             # 片段(短语)抽取keybert
-            if final_label=="NORMAL":
-                return final_label, final_score
+            if final_label == "NORMAL":
+                final_result[i] = {"text": text,
+                                   "is_illegal": False,
+                                   "position": [],
+                                   "label": []}
             else:
-
-                chunk_result = chunk_extract(text, embedding_type="pool")
-                chunk_result = [(k, v) for k, v in chunk_result if v > 0.9]
-                #find position
-    # 向量匹配
-    # 片段抽取（不良信息抽取）
-    pass
+                orig = text.replace(" ", "").replace("。", " ").replace("，", " ").replace("？", "").strip()
+                orig = orig.split(" ")
+                chunk_result = chunk_extract(text, orig, embedding_type="pool")
+                chunk_result = [(x, y, z, score) for (x, y, z, score) in chunk_result if score > 0.9]
+                position = [k[2] for k in chunk_result]
+                # [('今天天气还不错但是你妈死了', '死了', (11, 13), 0.9743359159128777),
+                # ('今天天气还不错但是你妈死了', '你妈', (9, 11), 0.973183968951763),
+                # ('今天天气还不错但是你妈死了', '妈死了', (10, 13), 0.9698428837171166),
+                # ('今天天气还不错但是你妈死了', '你妈死了', (9, 13), 0.9670800426186588),
+                # ('今天天气还不错但是你妈死了', '你妈死', (9, 12), 0.9640382451074878),
+                # ('今天天气还不错但是你妈死了', '但是你妈', (8, 12), 0.9345639370863443)]
+                final_result[i] = {"text": "".join(orig),
+                                   "is_illegal": True,
+                                   "position": position,
+                                   "label": final_label}
+    return final_result
 
 
 # 设置全局属性
@@ -103,7 +136,7 @@ st.set_page_config(
 # 正文
 st.title('5G消息敏感信息监测系统demo')
 table1, table2 = st.tabs(['待发送消息检测（可检出辱骂、涉政、涉黄、隐私信息）', '接收消息检测（可检出涉政、涉黄、广告、诈骗）'])
-with table1:
+with ((table1)):
     tab1, tab2, tab3 = st.tabs(['text', 'document', 'image'])
 
     with tab1:
@@ -115,15 +148,29 @@ with table1:
         text = st.text_input('please input text:', key=0)
         if text:
             print(type(text))
-            """
-            =======================
-            填入文本消息预处理、检测、后处理方法
-            
-            =======================
-            """
-
-            st.write("output", "0.99124:red[colors]", )
-            st.caption("this is test")
+            # """
+            # =======================
+            # 填入文本消息预处理、检测、后处理方法
+            #
+            # =======================
+            # """
+            final_result = RUN_SOP(text)
+            print(final_result, type(final_result))
+            out_text=""
+            for index in final_result:
+                result = final_result[index]
+                if result["is_illegal"] is False:
+                    out_text+=result["text"]
+                else:
+                    final_position = merge_intervals(result["position"])[0]
+                    final_text = result["text"]
+                    final_label = result["label"]
+                    final_text = final_text[:final_position[0]] \
+                                 + f":red[{final_text[final_position[0]:final_position[1]]}]" \
+                                 + final_text[final_position[1]:]
+                    out_text+=final_text + f"\t:red[-->违规：] :red[类型：{result['label']}]\n"
+            st.write(out_text)
+            st.caption("to be continued")
 
     with tab2:
         uploaded_file = st.file_uploader("Choose a file", type=["xlsx", "xls", "txt", "pdf"], key=1)
