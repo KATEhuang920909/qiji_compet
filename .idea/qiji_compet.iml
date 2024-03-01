@@ -7,6 +7,8 @@
       <sourceFolder url="file://$MODULE_DIR$/code" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/code/utils" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/code/chunk_extract/personal_info" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/code/chunk_extract/negative_info" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/code/ir/SentenceTransformer" isTestSource="false" />
     </content>
     <orderEntry type="jdk" jdkName="Python 3.9" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />

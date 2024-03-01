@@ -114,8 +114,12 @@ def parse_decodes(sentences, predictions, lengths, label_vocab):
 
 def convert_tokens_to_ids(tokens, vocab, oov_token=None):
     token_ids = []
+    print("tokens:",tokens)
     oov_id = vocab.get(oov_token) if oov_token else None
+
     for token in tokens:
+        print("token",token)
+        print("oov_id",oov_id)
         token_id = vocab.get(token, oov_id)
         token_ids.append(token_id)
     return token_ids
@@ -225,7 +229,6 @@ class Predictor(object):
             if args.benchmark:
                 self.autolog.times.stamp()
             input_ids, lens = batchify_fn(batch_data)
-            print(input_ids)
             self.input_handles[0].copy_from_cpu(input_ids)
             self.input_handles[1].copy_from_cpu(lens)
             self.predictor.run()
@@ -256,39 +259,41 @@ class Predictor(object):
         return results
 
 
-if __name__ == "__main__":
-    # test_ds = load_dataset(read, data_path=os.path.join(args.data_dir, "test.txt"), lazy=False)
-    text = "你是谁"
-    label_vocab = load_dict(os.path.join(args.data_dir, "tag.dic"))
-
-    word_vocab = load_dict(os.path.join(args.data_dir, "word.dic"))
-
-    token_ids = [convert_tokens_to_ids(text, word_vocab, "OOV")]
-    len_token_ids = [[len(token_ids)]]
-
-    token_ids = Pad(axis=0, pad_val=word_vocab.get("OOV", 0), dtype="int64")(token_ids)  # token_ids
-    len_token_ids = Stack(dtype="int64")(len_token_ids)
-    print(token_ids, len_token_ids)
-    predictor = Predictor(
-        args.model_dir,
-        args.device,
-        args.batch_size,
-        args.use_tensorrt,
-        args.precision,
-        args.enable_mkldnn,
-        args.benchmark,
-        args.save_log_path,
-    )
-    # import time
-    #
-    # t1 = time.time()
-    # print(test_ds)
-    batchify_fn = lambda samples, fn=Tuple(
-        Pad(axis=0, pad_val=word_vocab.get("OOV", 0), dtype="int32"),  # token_ids
-        Stack(dtype="int64"),  # seq_len
-    ): fn(samples)
-    results = predictor.predict([["黑龙江省双鸭山市尖山区八马路与东平行路交叉口北40米", 3]], batchify_fn, word_vocab, label_vocab)
-    print("\n".join(results))
-    # print(time.time() - t1)
-    # if args.benchmark:
-    #     predictor.autolog.report()
+# if __name__ == "__main__":
+#     # test_ds = load_dataset(read, data_path=os.path.join(args.data_dir, "test.txt"), lazy=False)
+#     text = "你是谁"
+#     label_vocab = load_dict(os.path.join(args.data_dir, "tag.dic"))
+#
+#     word_vocab = load_dict(os.path.join(args.data_dir, "word.dic"))
+#
+#     token_ids = [convert_tokens_to_ids(text, word_vocab, "OOV")]
+#     len_token_ids = [[len(token_ids)]]
+#
+#     token_ids = Pad(axis=0, pad_val=word_vocab.get("OOV", 0), dtype="int64")(token_ids)  # token_ids
+#     len_token_ids = Stack(dtype="int64")(len_token_ids)
+#     print(token_ids, len_token_ids)
+#     predictor = Predictor(
+#         args.model_dir,
+#         args.device,
+#         args.batch_size,
+#         args.use_tensorrt,
+#         args.precision,
+#         args.enable_mkldnn,
+#         args.benchmark,
+#         args.save_log_path,
+#     )
+#     # import time
+#     #
+#     # t1 = time.time()
+#     # print(test_ds)
+#     import pandas as pd
+#     batchify_fn = lambda samples, fn=Tuple(
+#         Pad(axis=0, pad_val=word_vocab.get("OOV", 0), dtype="int32"),  # token_ids
+#         Stack(dtype="int64"),  # seq_len
+#     ): fn(samples)
+#     file_path = r"D:\work\QIJI\qiji_compet\code\data\dataset\multi_cls_data\train_multi_v2.xlsx"
+#     data_init = pd.read_excel(file_path)[:200]
+#     content=data_init["content"].values.tolist()
+#     for text in content:
+#         results = predictor.predict([[text, len(text)]], batchify_fn, word_vocab, label_vocab)
+#         print("\n".join(results))

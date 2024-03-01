@@ -10,21 +10,19 @@ sys.path.append("../chunk_extract/personal_info")
 
 current_path = os.getcwd()  # 获取当前路径
 parent_path = os.path.dirname(current_path)
-print(current_path)
-exit()
 from Embedding import embedding
 from dfa import DFA
 import json
 from Faiss import index_update, search
 import paddle
-from model import SentenceTransformer
+from MatchModel import SentenceTransformer
 import pandas as pd
 import hnswlib
 from paddlenlp.transformers import AutoModel, AutoTokenizer
 import numpy as np
 
 from paddlenlp.data import Pad, Stack, Tuple
-from predict_bigru_crf import load_dict, convert_to_features, Predictor, args
+from predict_bigru_crf import load_dict, convert_tokens_to_ids, Predictor, args
 import pickle
 from functools import partial
 
@@ -54,6 +52,10 @@ print("Loaded parameters from %s" % params_path)
 ## chunk extract model
 label_vocab = load_dict(parent_path + r"\chunk_extract\personal_info\data\tag.dic")
 word_vocab = load_dict(parent_path + r"\chunk_extract\personal_info\data\word.dic")
+batchify_fn = lambda samples, fn=Tuple(
+    Pad(axis=0, pad_val=word_vocab.get("OOV", 0), dtype="int32"),  # token_ids
+    Stack(dtype="int64"),  # seq_len
+): fn(samples)
 predictor = Predictor(parent_path + r"\chunk_extract\personal_info\output",
                       args.device,
                       args.batch_size,
@@ -119,7 +121,7 @@ def text2embedding():
     except:
         pass
     results = embedding(model, text, tokenizer, embedding_type)
-    print(results)
+    # print(results)
     return results
 
 
@@ -170,16 +172,12 @@ def ner_predict():
     # else:
     text = request.args.get('contents')
     if text.strip():
-        text=text.strip()
-        token_id,len_token_id=convert_to_features(text,word_vocab)
+        text = text.strip()
+        len_text = [[len(text)]]
 
-    try:
-        text = eval(text)
-    except:
-        pass
-    results = embedding(model, text, tokenizer, embedding_type)
+        results = predictor.predict([[text, len_text]], batchify_fn, word_vocab, label_vocab)
     print(results)
-    return results
+    return {"ner_result": results}
 
 
 if __name__ == '__main__':

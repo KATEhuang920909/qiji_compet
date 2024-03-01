@@ -5,11 +5,16 @@ import cv2
 import sys
 from utils.data_preprocess import DataHelper
 import requests
+from collections import Counter
+
 sys.path.append("../")
 sys.path.append("./utils")
+sys.path.append("../chunk_extract/negative_info")
 import numpy as np
 from paddleocr import PaddleOCR
 import json
+from KeyBert import chunk_extract
+
 ocr = PaddleOCR(use_angle_cls=True)
 datahelper = DataHelper()
 
@@ -32,21 +37,57 @@ def bytes_to_numpy(image_bytes, channels='BGR'):
         return image_np
 
 
-def RUN_SOP(text: str, ):#
+def postprocess(soft_match_result):
+    label_score = dict()
+    label = [k[1] for k in soft_match_result if k[2] <= 0.1]
+    distance = [k[2] for k in soft_match_result if k[2] <= 0.1]
+    label_counts = Counter(label).items()
+    sorted_counts = sorted(label_counts, key=lambda x: x[1], reverse=True)
+    for lb, dist in zip(label, distance):
+        label_score.setdefault(lb, []).append(dist)
+    final_label = sorted_counts[0][0]
+    final_score = sum(label_score[final_label]) / len(label_score[final_label])
+    return final_label, final_score
+
+
+def RUN_SOP(contents: str, ):  #
     # 数据清洗
-    text_bag = datahelper.text_chunk(text)  #list
-    for unit in text_bag:
-        # 硬匹配
-        url = f"http://127.0.0.1:4567/hard_match/filter?contents={unit}"
+    text_bag = datahelper.text_chunk(contents)  # list
+    for text in text_bag:
+        #
+        # ner检测（隐私抽取）
+        url = f"http://127.0.0.1:4567/ner/person_info_check?contents={text}"
         r = requests.get(url=url)
-        result_json = json.loads(r.text)
-        if result_json['is_illegal']:
-            return result_json['position']
-        else:
-            # ner检测（隐私抽取）
+        print(r.text)
+        ner_result_json = json.loads(r.text)
+        # {'ner_result': ["('打倒中共共产党，打倒中共,这个法轮功万岁，妈卖批也。。。。', 'A1')"]}
+        # 硬匹配
+        url = f"http://127.0.0.1:4567/hard_match/filter?contents={text}"
+        r = requests.get(url=url)
+        hard_match_result_json = json.loads(r.text)
+        # {'is_illegal': True, 'position': [[0, 4, '反动'], [7, 11, '反动'], [13, 15, '暴恐']]}
+        if hard_match_result_json['is_illegal'] is False:
+            # 软匹配（向量检索）：
+            topk = 5
+            url = f"http://127.0.0.1:4567/soft_match/search?text={text}&topk={topk}"
+            r = requests.get(url=url)
+            soft_match_result_json = json.loads(r.text)
+            final_label, final_score = postprocess(soft_match_result_json['search_result'])
+            # {'search_result':
+            # [['中午记得打个电话给快递员看看他什么时候送,然后你不在的话让他送门卫那...', 'NORMAL', 0.02320396900177002],
+            # ['真的很容易', 'NORMAL', 0.02664703130722046],
+            # ['我的心情上面都更新了那么多天了', 'NORMAL', 0.030143380165100098],
+            # ['我晕 这机会都不要', 'NORMAL', 0.03533339500427246],
+            # ['来没来给我回个信', 'NORMAL', 0.03790527582168579]]}
 
+            # 片段(短语)抽取keybert
+            if final_label=="NORMAL":
+                return final_label, final_score
+            else:
 
-
+                chunk_result = chunk_extract(text, embedding_type="pool")
+                chunk_result = [(k, v) for k, v in chunk_result if v > 0.9]
+                #find position
     # 向量匹配
     # 片段抽取（不良信息抽取）
     pass
@@ -73,7 +114,6 @@ with table1:
         '''
         text = st.text_input('please input text:', key=0)
         if text:
-
             print(type(text))
             """
             =======================

@@ -63,7 +63,7 @@ def embedding(model, content, tokenizer, embedding_type="pool", batch_size=1):
             vector = model.pooling(query_input_ids, query_token_type_ids=query_token_type_ids)
 
             result = np.concatenate((result, vector), axis=0)
-        result = result[1:]
+        result = result[1:].tolist()
     elif embedding_type == "sequence":
         result = []
         for i, batch in enumerate(tqdm(batches)):
