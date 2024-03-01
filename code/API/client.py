@@ -34,22 +34,22 @@ import requests
 # print(result_json)
 
 # search
-text ="thjkgjkjyttrhtjew"
-embedding_type="pool"
-url = f"http://127.0.0.1:4567/soft_match/text2embedding?contents={text}&embedding_type={embedding_type}"
-r = requests.get(url=url)
-result_json = json.loads(r.text)
-print(len(result_json["embedding_result"][0]))
-
-
-
-# text ="你妈卖批"
-# topk = 10
-# url = f"http://127.0.0.1:4567/soft_match/search?text={text}&topk={topk}"
+# text ='虽然天气还不错，但是你这种行为让人不齿'
+# embedding_type="pool"
+# url = f"http://127.0.0.1:4567/soft_match/text2embedding?contents={text}&embedding_type={embedding_type}"
 # r = requests.get(url=url)
-# print(r.text)
 # result_json = json.loads(r.text)
-# print(result_json)
+# print(result_json["embedding_result"])
+
+
+
+text ='虽然天气还不错，但是你这种行为啥也不是'
+topk = 10
+url = f"http://127.0.0.1:4567/soft_match/search?text={text}&topk={topk}"
+r = requests.get(url=url)
+print(r.text)
+result_json = json.loads(r.text)
+print(result_json)
 
 # text ="你是谁qwertyuiop"
 # text ="打倒中共共产党，打倒中共,这个法轮功万岁，妈卖批也。。。。"

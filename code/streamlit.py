@@ -170,7 +170,7 @@ with ((table1)):
                                  + final_text[final_position[1]:]
                     out_text = final_text + f"\t:red[  -->违规，类型为{result['label']}]\n"
                     st.write(out_text)
-            st.caption("to be continued")
+            st.caption("发出消息包含辱骂、涉政等敏感信息，请谨慎发送。")
 
     with tab2:
         uploaded_file = st.file_uploader("Choose a file", type=["xlsx", "xls", "txt", "pdf"], key=1)
