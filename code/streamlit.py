@@ -156,11 +156,11 @@ with ((table1)):
             # """
             final_result = RUN_SOP(text)
             print(final_result, type(final_result))
-            out_text=""
             for index in final_result:
                 result = final_result[index]
                 if result["is_illegal"] is False:
-                    out_text+=result["text"]
+                    out_text = result["text"] + f"\t:green[  -->合规]\n"
+                    st.write(out_text)
                 else:
                     final_position = merge_intervals(result["position"])[0]
                     final_text = result["text"]
@@ -168,8 +168,8 @@ with ((table1)):
                     final_text = final_text[:final_position[0]] \
                                  + f":red[{final_text[final_position[0]:final_position[1]]}]" \
                                  + final_text[final_position[1]:]
-                    out_text+=final_text + f"\t:red[-->违规：] :red[类型：{result['label']}]\n"
-            st.write(out_text)
+                    out_text = final_text + f"\t:red[  -->违规，类型为{result['label']}]\n"
+                    st.write(out_text)
             st.caption("to be continued")
 
     with tab2:
