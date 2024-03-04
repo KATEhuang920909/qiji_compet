@@ -3,7 +3,7 @@ import pandas as pd
 from PyPDF2 import PdfReader
 import cv2
 import sys
-from utils.data_preprocess import DataHelper
+from utils.dataprocess import DataPreprocess, DataPostprocess
 import requests
 from collections import Counter
 
@@ -16,7 +16,8 @@ import json
 from KeyBert import chunk_extract
 
 ocr = PaddleOCR(use_angle_cls=True)
-datahelper = DataHelper()
+preprocess = DataPreprocess()
+postprocess = DataPostprocess()
 
 
 def bytes_to_numpy(image_bytes, channels='BGR'):
@@ -37,17 +38,7 @@ def bytes_to_numpy(image_bytes, channels='BGR'):
         return image_np
 
 
-def postprocess(soft_match_result):
-    label_score = dict()
-    label = [k[1] for k in soft_match_result if k[2] <= 0.1]
-    distance = [k[2] for k in soft_match_result if k[2] <= 0.1]
-    label_counts = Counter(label).items()
-    sorted_counts = sorted(label_counts, key=lambda x: x[1], reverse=True)
-    for lb, dist in zip(label, distance):
-        label_score.setdefault(lb, []).append(dist)
-    final_label = sorted_counts[0][0]
-    final_score = sum(label_score[final_label]) / len(label_score[final_label])
-    return final_label, final_score
+
 
 
 def merge_intervals(intervals):
@@ -63,37 +54,99 @@ def merge_intervals(intervals):
     return merged
 
 
-def RUN_SOP(contents: str, ) -> dict:  #
+def RUN_SOP(text: str, strategy) -> dict:  #
     # 数据清洗
-    final_result = {}
-    text_bag = datahelper.text_chunk(contents)  # list
-    for i, text in enumerate(text_bag):
-        #
+    # final_result = {}
+    # if type(contents) is str:
+    # text_bag = datahelper.text_chunk(contents)  # list
+    # for i, text in enumerate(text_bag):
+    #
 
-        # ner检测（隐私抽取）
-        # url = f"http://127.0.0.1:4567/ner/person_info_check?contents={text}"
-        # r = requests.get(url=url)
-        # print(r.text)
-        # ner_result_json = json.loads(r.text)  ## 待定
-        # {'ner_result': ["('打倒中共共产党，打倒中共,这个法轮功万岁，妈卖批也。。。。', 'A1')"]}
+    # ner检测（隐私抽取）
+    # url = f"http://127.0.0.1:4567/ner/person_info_check?contents={text}"
+    # r = requests.get(url=url)
+    # print(r.text)
+    # ner_result_json = json.loads(r.text)  ## 待定
+    # {'ner_result': ["('打倒中共共产党，打倒中共,这个法轮功万岁，妈卖批也。。。。', 'A1')"]}
 
-        # 硬匹配
-        url = f"http://127.0.0.1:4567/hard_match/filter?contents={text}"
-        r = requests.get(url=url)
-        hard_match_result_json = json.loads(r.text)
-        # {'is_illegal': True, 'position': [[0, 4, '反动'], [7, 11, '反动'], [13, 15, '暴恐']]}
-        if hard_match_result_json['is_illegal'] is True:
-            final_result[i] = {"text": text,
-                               "is_illegal": hard_match_result_json["is_illegal"],
-                               "position": [k[:2] for k in hard_match_result_json["position"]],
-                               "label": ",".join([k[-1] for k in hard_match_result_json["position"]])}
+    # 硬匹配
+    #     url = f"http://127.0.0.1:4567/hard_match/filter?contents={text}"
+    #     r = requests.get(url=url)
+    #     hard_match_result_json = json.loads(r.text)
+    #     # {'is_illegal': True, 'position': [[0, 4, '反动'], [7, 11, '反动'], [13, 15, '暴恐']]}
+    #     if hard_match_result_json['is_illegal'] is True:
+    #         final_result[i] = {"text": text,
+    #                            "is_illegal": hard_match_result_json["is_illegal"],
+    #                            "position": [k[:2] for k in hard_match_result_json["position"]],
+    #                            "label": ",".join([k[-1] for k in hard_match_result_json["position"]])}
+    #     else:
+    #         # 软匹配（向量检索）：
+    #         topk = 5
+    #         url = f"http://127.0.0.1:4567/soft_match/search?text={text}&topk={topk}"
+    #         r = requests.get(url=url)
+    #         soft_match_result_json = json.loads(r.text)
+    #         final_label, final_score = postprocess(soft_match_result_json['search_result'])
+    #         # {'search_result':
+    #         # [['中午记得打个电话给快递员看看他什么时候送,然后你不在的话让他送门卫那...', 'NORMAL', 0.02320396900177002],
+    #         # ['真的很容易', 'NORMAL', 0.02664703130722046],
+    #         # ['我的心情上面都更新了那么多天了', 'NORMAL', 0.030143380165100098],
+    #         # ['我晕 这机会都不要', 'NORMAL', 0.03533339500427246],
+    #         # ['来没来给我回个信', 'NORMAL', 0.03790527582168579]]}
+    #
+    #         # 片段(短语)抽取keybert
+    #         if final_label == "NORMAL":
+    #             final_result[i] = {"text": text,
+    #                                "is_illegal": False,
+    #                                "position": [],
+    #                                "label": []}
+    #         else:
+    #             orig = text.replace(" ", "").replace("。", " ").replace("，", " ").replace("？", "").strip()
+    #             orig = orig.split(" ")
+    #             chunk_result = chunk_extract(text, orig, embedding_type="pool")
+    #             chunk_result = [(x, y, z, score) for (x, y, z, score) in chunk_result if score > 0.9]
+    #             position = [k[2] for k in chunk_result]
+    #             # [('今天天气还不错但是你妈死了', '死了', (11, 13), 0.9743359159128777),
+    #             # ('今天天气还不错但是你妈死了', '你妈', (9, 11), 0.973183968951763),
+    #             # ('今天天气还不错但是你妈死了', '妈死了', (10, 13), 0.9698428837171166),
+    #             # ('今天天气还不错但是你妈死了', '你妈死了', (9, 13), 0.9670800426186588),
+    #             # ('今天天气还不错但是你妈死了', '你妈死', (9, 12), 0.9640382451074878),
+    #             # ('今天天气还不错但是你妈死了', '但是你妈', (8, 12), 0.9345639370863443)]
+    #             final_result[i] = {"text": "".join(orig),
+    #                                "is_illegal": True,
+    #                                "position": position,
+    #                                "label": final_label}
+    # return final_result
+    # ner检测（隐私抽取）
+    # url = f"http://127.0.0.1:4567/ner/person_info_check?contents={text}"
+    # r = requests.get(url=url)
+    # print(r.text)
+    # ner_result_json = json.loads(r.text)  ## 待定
+    # {'ner_result': ["('打倒中共共产党，打倒中共,这个法轮功万岁，妈卖批也。。。。', 'A1')"]}
+
+    # 硬匹配
+    url = f"http://127.0.0.1:4567/hard_match/filter?contents={text}"
+    r = requests.get(url=url)
+    hard_match_result_json = json.loads(r.text)
+    # {'is_illegal': True, 'position': [[0, 4, '反动'], [7, 11, '反动'], [13, 15, '暴恐']]}
+    if hard_match_result_json['is_illegal'] is True:
+        final_result = {"text": text,
+                        "is_illegal": hard_match_result_json["is_illegal"],
+                        "position": [k[:2] for k in hard_match_result_json["position"]],
+                        "label": ",".join([k[-1] for k in hard_match_result_json["position"]])}
+    else:
+        if (len(text) == 1) or text.isdigit():  # 挡板
+            final_result = {"text": text,
+                            "is_illegal": False,
+                            "position": [],
+                            "label": []}
+            return final_result
         else:
             # 软匹配（向量检索）：
             topk = 5
             url = f"http://127.0.0.1:4567/soft_match/search?text={text}&topk={topk}"
             r = requests.get(url=url)
             soft_match_result_json = json.loads(r.text)
-            final_label, final_score = postprocess(soft_match_result_json['search_result'])
+            final_label, final_score = postprocess.result_merge(soft_match_result_json['search_result'])
             # {'search_result':
             # [['中午记得打个电话给快递员看看他什么时候送,然后你不在的话让他送门卫那...', 'NORMAL', 0.02320396900177002],
             # ['真的很容易', 'NORMAL', 0.02664703130722046],
@@ -102,28 +155,105 @@ def RUN_SOP(contents: str, ) -> dict:  #
             # ['来没来给我回个信', 'NORMAL', 0.03790527582168579]]}
 
             # 片段(短语)抽取keybert
-            if final_label == "NORMAL":
-                final_result[i] = {"text": text,
-                                   "is_illegal": False,
-                                   "position": [],
-                                   "label": []}
+        if final_label == "NORMAL":
+            final_result = {"text": text,
+                            "is_illegal": False,
+                            "position": [],
+                            "label": []}
+        else:
+            if strategy == "SEND":
+                if final_label in ["FUCK", "POLITICAL", "SEX", "PRIVATE"]:
+                    orig = text.replace(" ", "").replace("。", " ").replace("，", " ").replace("？", "").strip()
+                    orig = orig.split(" ")
+                    chunk_result = chunk_extract(text, orig, embedding_type="pool")
+                    chunk_result = [(x, y, z, score) for (x, y, z, score) in chunk_result if score > 0.9]
+                    position = [k[2] for k in chunk_result]
+                    position = merge_intervals(position)
+                    # [('今天天气还不错但是你妈死了', '死了', (11, 13), 0.9743359159128777),
+                    # ('今天天气还不错但是你妈死了', '你妈', (9, 11), 0.973183968951763),
+                    # ('今天天气还不错但是你妈死了', '妈死了', (10, 13), 0.9698428837171166),
+                    # ('今天天气还不错但是你妈死了', '你妈死了', (9, 13), 0.9670800426186588),
+                    # ('今天天气还不错但是你妈死了', '你妈死', (9, 12), 0.9640382451074878),
+                    # ('今天天气还不错但是你妈死了', '但是你妈', (8, 12), 0.9345639370863443)]
+                    final_result = {"text": "".join(orig),
+                                    "is_illegal": True,
+                                    "position": position,
+                                    "label": final_label}
+                else:
+                    final_result = {"text": text,
+                                    "is_illegal": False,
+                                    "position": [],
+                                    "label": []}
+            elif strategy == "RECEIVE":
+                if final_label in ["POLITICAL", "SEX", "ADV", "FAKE"]:
+                    orig = text.replace(" ", "").replace("。", " ").replace("，", " ").replace("？", "").strip()
+                    orig = orig.split(" ")
+                    chunk_result = chunk_extract(text, orig, embedding_type="pool")
+                    chunk_result = [(x, y, z, score) for (x, y, z, score) in chunk_result if score > 0.9]
+                    position = [k[2] for k in chunk_result]
+                    position = merge_intervals(position)
+                    # [('今天天气还不错但是你妈死了', '死了', (11, 13), 0.9743359159128777),
+                    # ('今天天气还不错但是你妈死了', '你妈', (9, 11), 0.973183968951763),
+                    # ('今天天气还不错但是你妈死了', '妈死了', (10, 13), 0.9698428837171166),
+                    # ('今天天气还不错但是你妈死了', '你妈死了', (9, 13), 0.9670800426186588),
+                    # ('今天天气还不错但是你妈死了', '你妈死', (9, 12), 0.9640382451074878),
+                    # ('今天天气还不错但是你妈死了', '但是你妈', (8, 12), 0.9345639370863443)]
+                    final_result = {"text": "".join(orig),
+                                    "is_illegal": True,
+                                    "position": position,
+                                    "label": final_label}
+                else:
+                    final_result = {"text": text,
+                                    "is_illegal": False,
+                                    "position": [],
+                                    "label": []}
             else:
-                orig = text.replace(" ", "").replace("。", " ").replace("，", " ").replace("？", "").strip()
-                orig = orig.split(" ")
-                chunk_result = chunk_extract(text, orig, embedding_type="pool")
-                chunk_result = [(x, y, z, score) for (x, y, z, score) in chunk_result if score > 0.9]
-                position = [k[2] for k in chunk_result]
-                # [('今天天气还不错但是你妈死了', '死了', (11, 13), 0.9743359159128777),
-                # ('今天天气还不错但是你妈死了', '你妈', (9, 11), 0.973183968951763),
-                # ('今天天气还不错但是你妈死了', '妈死了', (10, 13), 0.9698428837171166),
-                # ('今天天气还不错但是你妈死了', '你妈死了', (9, 13), 0.9670800426186588),
-                # ('今天天气还不错但是你妈死了', '你妈死', (9, 12), 0.9640382451074878),
-                # ('今天天气还不错但是你妈死了', '但是你妈', (8, 12), 0.9345639370863443)]
-                final_result[i] = {"text": "".join(orig),
-                                   "is_illegal": True,
-                                   "position": position,
-                                   "label": final_label}
+                raise "strategy must be in [RECEIVE ,SEND]"
     return final_result
+
+
+def input_lines(contents: list, strategy):
+    if contents:
+        illegal_flag, final_flag = False, False
+        for i, info_lines in enumerate(contents):
+            lines = ""
+            if type(info_lines) == list:
+                for info in info_lines:
+                    if info:
+                        line_result = RUN_SOP(str(info), strategy)
+                        if line_result["is_illegal"]:
+                            illegal_flag = 1
+                            final_position = line_result["position"]
+                            final_text = line_result["text"]
+                            final_label = line_result["label"]
+                            final_text = postprocess.output_position_text(final_text, final_position)
+                            lines += final_text
+                        else:
+                            lines += str(info) + " "
+                    else:
+                        lines += str(info) + " "
+            elif type(info_lines) == str and info_lines != "None":
+                line_result = RUN_SOP(str(info_lines), strategy)
+                if line_result["is_illegal"]:
+                    illegal_flag = True
+                    final_flag = True
+                    final_position = line_result["position"]
+                    final_text = line_result["text"]
+                    final_label = line_result["label"]
+                    print(final_text,final_position)
+                    final_text = postprocess.output_position_text(final_text, final_position)
+                    lines += final_text
+            if illegal_flag:
+                out_text = lines + f"\t:red[  -->违规，类型为{final_label}]\n"
+                illegal_flag = False
+                st.write(out_text)
+        if final_flag:
+            if strategy=="SEND":
+                st.caption("发出信息疑似包含辱骂、涉政等敏感信息，请谨慎操作。")
+            elif strategy=="RECEIVE":
+                st.caption("接收信息疑似包含辱骂、涉政等敏感信息，请谨慎操作。")
+    else:
+        st.caption("无有效文本信息")
 
 
 # 设置全局属性
@@ -136,76 +266,76 @@ st.set_page_config(
 # 正文
 st.title('5G消息敏感信息监测系统demo')
 table1, table2 = st.tabs(['待发送消息检测（可检出辱骂、涉政、涉黄、隐私信息）', '接收消息检测（可检出涉政、涉黄、广告、诈骗）'])
-with ((table1)):
+with table1:
     tab1, tab2, tab3 = st.tabs(['text', 'document', 'image'])
 
     with tab1:
         '''
-        ```text
-        Wise men say only fools rush in but I can't help falling in love with you
+        ```markdown
+        *规范个人言语行为，保护个人安全信息*
         ```
         '''
-        text = st.text_input('please input text:', key=0)
-        if text:
-            print(type(text))
-            # """
-            # =======================
-            # 填入文本消息预处理、检测、后处理方法
-            #
-            # =======================
-            # """
-            final_result = RUN_SOP(text)
-            print(final_result, type(final_result))
-            for index in final_result:
-                result = final_result[index]
-                if result["is_illegal"] is False:
-                    out_text = result["text"] + f"\t:green[  -->合规]\n"
-                    st.write(out_text)
-                else:
-                    final_position = merge_intervals(result["position"])[0]
-                    final_text = result["text"]
-                    final_label = result["label"]
-                    final_text = final_text[:final_position[0]] \
-                                 + f":red[{final_text[final_position[0]:final_position[1]]}]" \
-                                 + final_text[final_position[1]:]
-                    out_text = final_text + f"\t:red[  -->违规，类型为{result['label']}]\n"
-                    st.write(out_text)
-            st.caption("发出消息包含辱骂、涉政等敏感信息，请谨慎发送。")
+        contents = st.text_input('please input text:', key=0)
+        if contents:
+            st.write("数据预览：")
+            st.write(contents[:100])
+            content_lines = preprocess.text_chunk(contents)  # list
+            input_lines(content_lines, strategy="SEND")
 
     with tab2:
+        '''
+                ```markdown
+                *规范个人言语行为，保护个人安全信息*
+                ```
+        '''
         uploaded_file = st.file_uploader("Choose a file", type=["xlsx", "xls", "txt", "pdf"], key=1)
-        # if uploaded_file is not None:
-        #     # To read file as bytes:
-        #     bytes_data = uploaded_file.getvalue().decode("utf8")
-        #     st.caption(bytes_data[:500] + "...")
-        #     st.write(":red[" + bytes_data[300:400] + "]")
 
         if uploaded_file is not None:
             name = uploaded_file.name.split(".")[-1]
             try:
                 if name in ["xlsx", "xls"]:
                     df = pd.read_excel(uploaded_file, dtype="str")
+                    content_lines = df.values
                     st.write("数据预览：")
                     st.write(df.head(5))
+                    if len(df) >= 1:
+                        input_lines(content_lines, strategy="SEND")
+
                 elif name == "txt":
                     bytes_data = uploaded_file.getvalue().decode("utf8")
-                    st.caption(bytes_data[:500] + "...")
-                    st.write(":red[" + bytes_data[300:400] + "]")
+                    content_lines = bytes_data.split("\n")
+                    if len(content_lines) == 1:
+                        text = content_lines[0]
+                        if text.strip():
+                            st.write("数据预览：")
+                            st.write(text[:100])
+                        else:
+                            st.caption("无有效文本信息")
+                    elif len(content_lines) > 1:  # 多行
+                        st.write("数据预览：")
+                        st.write(pd.DataFrame(content_lines[:5]))
+                        input_lines(content_lines, strategy="SEND")
                 elif name == "pdf":
                     pdf_reader = PdfReader(uploaded_file)
                     text = '\n\n'.join([page.extract_text() for page in pdf_reader.pages])
-                    st.write(text)
-                    st.write(":red[" + text[100:120] + "]")
-                """
-                =======================
-                填入文本消息预处理、检测、后处理方法
-    
-                =======================
-                """
+                    if text.strip():
+                        st.write("数据预览：")
+                        st.write(text[:100])
+                        content_lines = preprocess.text_chunk(contents)  # list
+                        input_lines(content_lines, strategy="SEND")
+                    else:
+                        st.caption("无有效文本信息")
+
+
 
             except Exception as e:
                 st.write(e)
     with tab3:
+        '''
+                ```markdown
+                *规范个人言语行为，保护个人安全信息*
+                ```
+        '''
         # 上传图片并展示
         uploaded_file = st.file_uploader("上传一张图片", type="jpg", key=2)
 
@@ -220,69 +350,80 @@ with ((table1)):
             ocr_result = ocr.ocr(opencv_image, cls=True)
             ocr_result = '\n'.join([line[1][0] for line in ocr_result[0]])
 
-            """
-            =======================
-            填入文本消息预处理、检测、后处理方法
-    
-            =======================
-            """
-            result = ocr_result
-            st.write(result)
+            st.write("数据预览：")
+            st.write(ocr_result[:100])
+            content_lines = preprocess.text_chunk(ocr_result)  # list
+            input_lines(content_lines, strategy="SEND")
 with table2:
     tab1, tab2, tab3 = st.tabs(['text', 'document', 'image'])
 
     with tab1:
         '''
-        ```text
-        Wise men say only fools rush in but I can't help falling in love with you
-        ```
+                ```markdown
+                *鉴别网络不良信息，提高网络防范意识*
+                ```
         '''
-        text = st.text_input('please input text:', key=3)
-        if text == "text":
-            """
-            =======================
-            填入文本消息预处理、检测、后处理方法
-
-            =======================
-            """
-
-            st.write("output", "0.99124:red[colors]", )
-            st.caption("this is test")
+        contents = st.text_input('please input text:', key=3)
+        if contents:
+            st.write("数据预览：")
+            st.write(contents[:100])
+            content_lines = preprocess.text_chunk(contents)  # list
+            input_lines(content_lines, strategy="RECEIVE")
 
     with tab2:
+        '''
+                ```markdown
+                *鉴别网络不良信息，提高网络防范意识*
+                ```
+        '''
         uploaded_file = st.file_uploader("Choose a file", type=["xlsx", "xls", "txt", "pdf"], key=4)
-        # if uploaded_file is not None:
-        #     # To read file as bytes:
-        #     bytes_data = uploaded_file.getvalue().decode("utf8")
-        #     st.caption(bytes_data[:500] + "...")
-        #     st.write(":red[" + bytes_data[300:400] + "]")
 
         if uploaded_file is not None:
             name = uploaded_file.name.split(".")[-1]
             try:
                 if name in ["xlsx", "xls"]:
                     df = pd.read_excel(uploaded_file, dtype="str")
+                    content_lines = df.values
                     st.write("数据预览：")
                     st.write(df.head(5))
+                    if len(df) >= 1:
+                        input_lines(content_lines, strategy="RECEIVE")
+
                 elif name == "txt":
                     bytes_data = uploaded_file.getvalue().decode("utf8")
-                    st.caption(bytes_data[:500] + "...")
-                    st.write(":red[" + bytes_data[300:400] + "]")
+                    content_lines = bytes_data.split("\n")
+                    if len(content_lines) == 1:
+                        text = content_lines[0]
+                        if text.strip():
+                            st.write("数据预览：")
+                            st.write(text[:100])
+                        else:
+                            st.caption("无有效文本信息")
+                    elif len(content_lines) > 1:  # 多行
+                        st.write("数据预览：")
+                        st.write(pd.DataFrame(content_lines[:5]))
+                        input_lines(content_lines, strategy="RECEIVE")
                 elif name == "pdf":
                     pdf_reader = PdfReader(uploaded_file)
                     text = '\n\n'.join([page.extract_text() for page in pdf_reader.pages])
-                    st.write(text)
-                    st.write(":red[" + text[100:120] + "]")
-                """
-                =======================
-                填入文本消息预处理、检测、后处理方法
+                    if text.strip():
+                        st.write("数据预览：")
+                        st.write(text[:100])
+                        content_lines = preprocess.text_chunk(contents)  # list
+                        input_lines(content_lines, strategy="RECEIVE")
+                    else:
+                        st.caption("无有效文本信息")
 
-                =======================
-                """
+
 
             except Exception as e:
                 st.write(e)
     with tab3:
+        '''
+                ```markdown
+                *鉴别网络不良信息，提高网络防范意识*
+                ```
+        '''
         # 上传图片并展示
         uploaded_file = st.file_uploader("上传一张图片", type="jpg", key=5)
 
@@ -297,11 +438,7 @@ with table2:
             ocr_result = ocr.ocr(opencv_image, cls=True)
             ocr_result = '\n'.join([line[1][0] for line in ocr_result[0]])
 
-            """
-            =======================
-            填入文本消息预处理、检测、后处理方法
-
-            =======================
-            """
-            result = ocr_result
-            st.write(result)
+            st.write("数据预览：")
+            st.write(ocr_result[:100])
+            content_lines = preprocess.text_chunk(ocr_result)  # list
+            input_lines(content_lines, strategy="RECEIVE")

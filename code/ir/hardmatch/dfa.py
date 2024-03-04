@@ -10,7 +10,7 @@ class DFA:
         self.ban_words_list = list()
         self.ban_words_dict = dict()
         self.words_label = dict()  ############
-        self.path = parent_path + r'/dicts/sensitive_words.txt'
+        self.path = parent_path + r'/dicts/black_list.txt'
         self.get_words()
 
     # 获取敏感词列表
@@ -67,26 +67,58 @@ class DFA:
         i = 0
         start_word = -1
         is_start = True  # 判断是否是一个敏感词的开始
+        flag = 0
         while i < len(_str):
+
             if _str[i] not in now_dict:
                 if is_start is True:
                     i += 1
+                    start_word = i
                     continue
-                i = start_word + 1
-                start_word = -1
-                is_start = True
-                now_dict = self.ban_words_dict
+                else:
+                    if flag == 0:
+                        start_word = i
+                        is_start = True
+                        now_dict = self.ban_words_dict
+                        if _str[i] in now_dict:
+                            is_start = False
+                            now_dict = now_dict[_str[i]]
+                            if now_dict['is_end'] is True:
+                                flag = 1
+                                i += 1
+
+
+                            else:
+                                if flag == 1:
+                                    break
+                                    # return start_word, i, labels
+                                else:
+                                    i += 1
+
+                    else:
+                        break
             else:
+
                 if is_start is True:
                     start_word = i
                     is_start = False
                 now_dict = now_dict[_str[i]]
                 if now_dict['is_end'] is True:
-                    labels = self.words_label[_str[start_word:i + 1]]
-                    return start_word, i + 1, labels
-                else:
+                    flag = 1
                     i += 1
-        return -1, None, None
+
+
+                else:
+                    if flag == 1:
+                        break
+                        # return start_word, i, labels
+                    else:
+                        i += 1
+        if flag == 1:
+            labels = self.words_label[_str[start_word:i]]
+            return start_word, i, labels
+        else:
+            return -1, None, None
 
     # 查找是否存在敏感词
     def exists(self, s):
@@ -100,17 +132,22 @@ class DFA:
     def filter_words(self, filter_str, pos):
         flag = 0
         now_dict = self.ban_words_dict
+        # print(now_dict)
+        # exit()
         end_str = int()
         for i in range(pos, len(filter_str)):
             if filter_str[i] in now_dict and now_dict[filter_str[i]]['is_end'] is True:
                 flag = 1
             else:
                 if flag == 1:
-                    end_str = i - 1
+                    end_str = i
+                    flag = 0
                     break
             now_dict = now_dict[filter_str[i]]
-        num = end_str - pos + 1
-        filter_str = filter_str[:pos] + '*' * num + filter_str[end_str + 1:]
+        if flag == 1:
+            end_str = i
+        num = end_str - pos
+        filter_str = filter_str[:pos] + '*' * num + filter_str[end_str:]
         return filter_str
 
     def filter_all(self, s):
@@ -118,7 +155,8 @@ class DFA:
         pos_list = list()
         ss = DFA.draw_words(s, pos_list)
         pos_label = self.find_illegal(ss)
-        while pos_label[0] != -1:
+        # exit()
+        while pos_label and pos_label[0] != -1:
             result.append(pos_label)
             ss = self.filter_words(ss, pos_label[0])
             pos_label = self.find_illegal(ss)
@@ -147,8 +185,17 @@ class DFA:
         return ss
 
 
-if __name__ == '__main__':
-    with open("D:\work\QIJI\qiji_compet\code\dicts\sensitive_words.txt", 'r', encoding='utf-8-sig') as f:
-        for s in f:
-            text = s.split("\t")
-            label, word = text[1], text[-1].strip()
+# if __name__ == '__main__':
+#     # with open("D:\work\QIJI\qiji_compet\code\dicts\sensitive_words.txt", 'r', encoding='utf-8-sig') as f:
+#     #     for s in f:
+#     #         text = s.split("\t")
+#     #         label, word = text[1], text[-1].strip()
+# dfa = DFA()
+# string = ["法轮功是法轮功"]
+# for unit in string:
+#     if dfa.exists(unit) is False:
+#         print(False)
+#         position = []
+#     else:
+#         position = dfa.filter_all(unit)
+#         print(position)

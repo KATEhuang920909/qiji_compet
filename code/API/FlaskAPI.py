@@ -7,7 +7,7 @@ sys.path.append("../ir/hardmatch")
 sys.path.append("../ir/SentenceTransformer")
 sys.path.append("../ir/softmatch")
 sys.path.append("../chunk_extract/personal_info")
-
+sys.path.append("../ir/dicts")
 current_path = os.getcwd()  # 获取当前路径
 parent_path = os.path.dirname(current_path)
 from Embedding import embedding
@@ -44,7 +44,7 @@ index_path = parent_path + r"\ir\softmatch\vector_index.bin"
 index = hnswlib.Index(space='cosine', dim=768)
 index.load_index(index_path)
 file_path = parent_path + r"\data\dataset\multi_cls_data\train_multi_v2.xlsx"
-data_init = pd.read_excel(file_path)[:100]
+data_init = pd.read_excel(file_path)
 sentences = data_init["content"].values.tolist()
 labels = data_init["label"].values.tolist()
 print("Loaded parameters from %s" % params_path)

@@ -73,7 +73,7 @@ def chunk_extract(text, orig,embedding_type="pool"):
 
 
 if __name__ == '__main__':
-    text = "今天天气还不错。但是你妈死了"
+    text = ".,,.[;[.],[.],.[],.["
     orig = text.replace(" ", "").replace("。", " ").replace("，", " ").replace("？", "").strip()
     orig = orig.split(" ")
     # print(orig)

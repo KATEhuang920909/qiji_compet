@@ -43,16 +43,16 @@ import requests
 
 
 
-text ='虽然天气还不错，但是你这种行为啥也不是'
-topk = 10
-url = f"http://127.0.0.1:4567/soft_match/search?text={text}&topk={topk}"
-r = requests.get(url=url)
-print(r.text)
-result_json = json.loads(r.text)
-print(result_json)
+# text ='虽然天气还不错，但是你这种行为啥也不是'
+# topk = 10
+# url = f"http://127.0.0.1:4567/soft_match/search?text={text}&topk={topk}"
+# r = requests.get(url=url)
+# print(r.text)
+# result_json = json.loads(r.text)
+# print(result_json)
 
 # text ="你是谁qwertyuiop"
-# text ="打倒中共共产党，打倒中共,这个法轮功万岁，妈卖批也。。。。"
+# text ="法轮功"
 # # embedding_type="sequence"
 # url = f"http://127.0.0.1:4567/hard_match/filter?contents={text}"
 # r = requests.get(url=url)
