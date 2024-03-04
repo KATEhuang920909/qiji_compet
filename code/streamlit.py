@@ -38,9 +38,6 @@ def bytes_to_numpy(image_bytes, channels='BGR'):
         return image_np
 
 
-
-
-
 def merge_intervals(intervals):
     intervals.sort()  # 先按起始位置从小到大排序
 
@@ -240,7 +237,7 @@ def input_lines(contents: list, strategy):
                     final_position = line_result["position"]
                     final_text = line_result["text"]
                     final_label = line_result["label"]
-                    print(final_text,final_position)
+                    print(final_text, final_position)
                     final_text = postprocess.output_position_text(final_text, final_position)
                     lines += final_text
             if illegal_flag:
@@ -248,9 +245,9 @@ def input_lines(contents: list, strategy):
                 illegal_flag = False
                 st.write(out_text)
         if final_flag:
-            if strategy=="SEND":
+            if strategy == "SEND":
                 st.caption("发出信息疑似包含辱骂、涉政等敏感信息，请谨慎操作。")
-            elif strategy=="RECEIVE":
+            elif strategy == "RECEIVE":
                 st.caption("接收信息疑似包含辱骂、涉政等敏感信息，请谨慎操作。")
     else:
         st.caption("无有效文本信息")

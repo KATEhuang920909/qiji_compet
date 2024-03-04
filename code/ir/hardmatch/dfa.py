@@ -190,12 +190,12 @@ class DFA:
 #     #     for s in f:
 #     #         text = s.split("\t")
 #     #         label, word = text[1], text[-1].strip()
-# dfa = DFA()
-# string = ["法轮功是法轮功"]
-# for unit in string:
-#     if dfa.exists(unit) is False:
-#         print(False)
-#         position = []
-#     else:
-#         position = dfa.filter_all(unit)
-#         print(position)
+dfa = DFA()
+string = ["198964"]
+for unit in string:
+    if dfa.exists(unit) is False:
+        print(False)
+        position = []
+    else:
+        position = dfa.filter_all(unit)
+        print(position)

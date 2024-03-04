@@ -129,7 +129,7 @@ def text2embedding():
 def vector_update():
     file_path = request.args.get('file_path', '')
     save_path = request.args.get('save_path', '')
-    data = pd.read_excel(file_path)[:100]  # .sample(n=200)
+    data = pd.read_excel(file_path)  # .sample(n=200)
     sentences = data["content"].tolist()
     labels = data["label"].tolist()
     result = embedding(model, sentences, tokenizer)["embedding_result"]
