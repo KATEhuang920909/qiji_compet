@@ -18,9 +18,9 @@ import paddle
 from MatchModel import SentenceTransformer
 import pandas as pd
 import hnswlib
-from paddlenlp.transformers import AutoModel, AutoTokenizer
+from paddlenlp.transformers import ErnieTokenizer, ErnieModel
 import numpy as np
-
+from tqdm import tqdm
 from paddlenlp.data import Pad, Stack, Tuple
 from predict_bigru_crf import load_dict, convert_tokens_to_ids, Predictor, args
 import pickle
@@ -32,12 +32,11 @@ app = Flask(__name__)
 dfa = DFA()
 
 ##### softmatch model
-tokenizer = AutoTokenizer.from_pretrained("ernie-3.0-medium-zh")
-pretrained_model = AutoModel.from_pretrained(r"ernie-3.0-medium-zh")
-model = SentenceTransformer(pretrained_model)
-params_path = parent_path + "\ir\softmatch\match_model\model_state.pdparams"
-state_dict = paddle.load(params_path)
-model.set_dict(state_dict)
+
+params_path = parent_path + r"\ir\softmatch\embedding_model"
+tokenizer = ErnieTokenizer.from_pretrained(params_path)
+embedding_model = ErnieModel.from_pretrained(params_path)
+embedding_model.eval()
 
 ## hnsw model
 index_path = parent_path + r"\ir\softmatch\vector_index.bin"
@@ -50,8 +49,8 @@ labels = data_init["label"].values.tolist()
 print("Loaded parameters from %s" % params_path)
 
 ## chunk extract model
-label_vocab = load_dict(parent_path + r"\chunk_extract\personal_info\data\tag.dic")
-word_vocab = load_dict(parent_path + r"\chunk_extract\personal_info\data\word.dic")
+label_vocab = load_dict(parent_path + r"\chunk_extract\personal_info\bak\data\tag.dic")
+word_vocab = load_dict(parent_path + r"\chunk_extract\personal_info\bak\data\word.dic")
 batchify_fn = lambda samples, fn=Tuple(
     Pad(axis=0, pad_val=word_vocab.get("OOV", 0), dtype="int32"),  # token_ids
     Stack(dtype="int64"),  # seq_len
@@ -120,7 +119,7 @@ def text2embedding():
         text = eval(text)
     except:
         pass
-    results = embedding(model, text, tokenizer, embedding_type)
+    results = embedding(embedding_model, text, tokenizer, embedding_type)
     # print(results)
     return results
 
@@ -129,13 +128,13 @@ def text2embedding():
 def vector_update():
     file_path = request.args.get('file_path', '')
     save_path = request.args.get('save_path', '')
-    data = pd.read_excel(file_path)  # .sample(n=200)
-    sentences = data["content"].tolist()
-    labels = data["label"].tolist()
-    result = embedding(model, sentences, tokenizer)["embedding_result"]
+    data = pd.read_excel(file_path)# .sample(n=200)
+    sentences = data["content"].values.tolist()
+    labels = data["label"].values.tolist()
     content_bag = []
-    for i, (con, lb) in enumerate(zip(sentences, labels)):
-        content_bag.append({"label": lb, "vector": result[i]})
+    for i, (con, lb) in tqdm(enumerate(zip(sentences, labels))):
+        result = embedding(embedding_model, con, tokenizer)
+        content_bag.append({"label": lb, "vector": result[0]})
     content2embed = dict(zip(sentences, content_bag))  # {content1:{"label":,"vector":},content2:{}...}
     try:
         pickle.dump(content2embed, open(save_path + r"\vector.pkl", "wb"))
@@ -157,9 +156,9 @@ def Search():
     text = request.args.get('text', '')
     k = int(request.args.get('topk', ''))
     print(text)
-    vector = embedding(model, text, tokenizer)
-    print(len(list(vector.values())[0][0]))
-    result = search(index, list(vector.values())[0][0], sentences, labels, k)
+    vector = embedding(embedding_model, text, tokenizer)
+    print(len(vector[0]))
+    result = search(index, vector, sentences, labels, k)
     return result
 
 

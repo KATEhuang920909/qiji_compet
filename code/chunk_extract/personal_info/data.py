@@ -26,20 +26,47 @@ def load_dict(dict_path):
     return vocab
 
 
+# 加载数据文件datafiles
 def load_dataset(datafiles):
+    # 读取数据文件data_path
     def read(data_path):
-        with open(data_path, "r", encoding="utf-8") as fp:
-            next(fp)  # Skip header
+        with open(data_path, 'r', encoding='utf-8') as fp:
+            next(fp)  # Skip header  #Deleted by WGM
+            # 处理每行数据（文本+‘\t’+标注）
             for line in fp.readlines():
-                words, labels = line.strip("\n").split("\t")
-                words = words.split("\002")
-                labels = labels.split("\002")
+                # 提取文本和标注
+                words, labels = line.strip('\n').split('\t')
+                # 文本中单字和标注构成的数组
+                words = words.split('\002')
+                labels = labels.split('\002')
+                # 迭代返回文本和标注
                 yield words, labels
 
-    if isinstance(datafiles, str):
+    # 根据datafiles的数据类型，选择合适的处理方式
+    if isinstance(datafiles, str):  # 字符串，单个文件名称
+        # 返回单个文件对应的单个数据集
         return MapDataset(list(read(datafiles)))
-    elif isinstance(datafiles, list) or isinstance(datafiles, tuple):
+    elif isinstance(datafiles, list) or isinstance(datafiles, tuple):  # 列表或元组，多个文件名称
+        # 返回多个文件对应的多个数据集
         return [MapDataset(list(read(datafile))) for datafile in datafiles]
+
+
+# 加载字典文件，文件由单列构成，需要设置value
+def load_dict_single(dict_path):
+    # 字典初始化为空
+    vocab = {}
+    # value是自增数值，从0开始
+    i = 0
+    # 逐行读取字典文件
+    for line in open(dict_path, 'r', encoding='utf-8'):
+        # 将每行文字设置为key
+        line = line.strip('\n').split(" ")
+        # 设置对应的value
+        for label in line:
+            if label not in vocab:
+                vocab[label] = i
+                i += 1
+    return vocab
 
 
 def parse_decodes(sentences, predictions, lengths, label_vocab):

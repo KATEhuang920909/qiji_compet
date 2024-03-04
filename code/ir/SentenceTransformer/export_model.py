@@ -115,11 +115,10 @@ if __name__ == "__main__":
     model.eval()
 
     input_spec = [
-        paddle.static.InputSpec(shape=[None, None], dtype="int64", name="query_input_ids"),
-        paddle.static.InputSpec(shape=[None, None], dtype="int64", name="title_input_ids"),
+        paddle.static.InputSpec(shape=[None, None], dtype="int64", name="query_input_ids")
     ]
     # Convert to static graph with specific input description
-    model = paddle.jit.to_static(model, input_spec=input_spec)
+    model = paddle.jit.to_static(model.ptm, input_spec=input_spec)
 
     # Save in static graph model.
     save_path = os.path.join(args.output_path, "match_model")

@@ -19,35 +19,36 @@ import requests
 # print(result_json)
 
 # 获取向量库
-file_path=r"D:\work\QIJI\qiji_compet\code\data\dataset\multi_cls_data\train_multi_v2.xlsx"
-save_path=r"D:\work\QIJI\qiji_compet\code\ir\softmatch"
+file_path = r"D:\work\QIJI\qiji_compet\code\data\dataset\multi_cls_data\train_multi_v2.xlsx"
+save_path = r"D:\work\QIJI\qiji_compet\code\ir\softmatch"
 url = fr"http://127.0.0.1:4567/soft_match/vector_update?file_path={file_path}&save_path={save_path}"
 r = requests.get(url=url)
 result_json = json.loads(r.text)
 print(result_json)
 # #
 # 获取索引库
-save_path=r"D:\work\QIJI\qiji_compet\code\ir\softmatch\vector.pkl"
-url = fr"http://127.0.0.1:4567/soft_match/index_update?vector_path={save_path}"
-r = requests.get(url=url)
-result_json = json.loads(r.text)
-print(result_json)
 
-# search
-# text ='虽然天气还不错，但是你这种行为让人不齿'
+# save_path=r"D:\work\QIJI\qiji_compet\code\ir\vector.pkl"
+# url = f"http://127.0.0.1:4567/soft_match/index_update?vector_path={save_path}"
+# r = requests.get(url=url)
+# result_json = json.loads(r.text)
+# print(result_json)
+
+# embedding
+# text ='NAME会员您好假期一定要旅yun行dong浮潜套装DIGIT起到店扫码更有惊喜URL回td退订'
 # embedding_type="pool"
 # url = f"http://127.0.0.1:4567/soft_match/text2embedding?contents={text}&embedding_type={embedding_type}"
 # r = requests.get(url=url)
 # result_json = json.loads(r.text)
-# print(result_json["embedding_result"])
-
-
-
-# text ='虽然天气还不错，但是你这种行为啥也不是'
+# print(result_json)
+#
+#
+#
+# text ='NAME会员您好假期一定要旅yun行dong浮潜套装DIGIT起到店扫码更有惊喜URL回td退订'
 # topk = 10
 # url = f"http://127.0.0.1:4567/soft_match/search?text={text}&topk={topk}"
 # r = requests.get(url=url)
-# print(r.text)
+#
 # result_json = json.loads(r.text)
 # print(result_json)
 

@@ -16,18 +16,24 @@ import argparse
 import os
 
 import paddle
-from model import SentenceTransformer
+from MatchModel import SentenceTransformer
 
 from paddlenlp.data import Pad, Tuple
 from paddlenlp.transformers import AutoModel, AutoTokenizer
 
 # fmt: off
 parser = argparse.ArgumentParser()
-parser.add_argument("--params_path", type=str, default=r'D:\code\qiji_compet\code\models\match_model\model_state.pdparams', help="The path to model parameters to be loaded.")
-parser.add_argument("--max_seq_length", default=128, type=int, help="The maximum total input sequence length after tokenization. Sequences longer than this will be truncated, sequences shorter will be padded.")
+parser.add_argument("--params_path", type=str,
+                    default=r'D:\work\QiJi\qiji_compet\code\ir\softmatch\match_model\model_state.pdparams',
+                    help="The path to model parameters to be loaded.")
+parser.add_argument("--max_seq_length", default=128, type=int,
+                    help="The maximum total input sequence length after tokenization. Sequences longer than this will be truncated, sequences shorter will be padded.")
 parser.add_argument("--batch_size", default=32, type=int, help="Batch size per GPU/CPU for training.")
-parser.add_argument('--device', choices=['cpu', 'gpu'], default="cpu", help="Select which device to train model, defaults to gpu.")
+parser.add_argument('--device', choices=['cpu', 'gpu'], default="cpu",
+                    help="Select which device to train model, defaults to gpu.")
 args = parser.parse_args()
+
+
 # fmt: on
 
 
@@ -101,7 +107,7 @@ def predict(model, data, tokenizer, label_map, batch_size=1):
         examples.append((query_input_ids, query_token_type_ids, title_input_ids, title_token_type_ids))
 
     # Separates data into some batches.
-    batches = [examples[idx : idx + batch_size] for idx in range(0, len(examples), batch_size)]
+    batches = [examples[idx: idx + batch_size] for idx in range(0, len(examples), batch_size)]
     batchify_fn = lambda samples, fn=Tuple(
         Pad(axis=0, pad_val=tokenizer.pad_token_id),  # query_input
         Pad(axis=0, pad_val=tokenizer.pad_token_type_id),  # query_segment
@@ -124,7 +130,7 @@ def predict(model, data, tokenizer, label_map, batch_size=1):
             query_token_type_ids=query_token_type_ids,
             title_token_type_ids=title_token_type_ids,
         )
-        print(model.pooling(query_input_ids,query_token_type_ids=query_token_type_ids))
+        print(model.pooling(query_input_ids, query_token_type_ids=query_token_type_ids))
         idx = paddle.argmax(probs, axis=1).numpy()
         idx = idx.tolist()
         labels = [label_map[i] for i in idx]
@@ -139,9 +145,8 @@ if __name__ == "__main__":
     tokenizer = AutoTokenizer.from_pretrained("ernie-3.0-medium-zh")
 
     data = [
-        ["世界上什么东西最小", "世界上什么东西最小？"],
-        ["光眼睛大就好看吗", "眼睛好看吗？"],
-        ["小蝌蚪找妈妈怎么样", "小蝌蚪找妈妈是谁画的"],
+        ["失眠，和同月同日生的姐妹聊今年的生日party要一起办，要办睡衣趴！好期待！",
+         "NAME会员您好假期一定要旅yun行dong浮潜套装DIGIT起到店扫码更有惊喜URL回td退订"],
     ]
     label_map = {0: "dissimilar", 1: "similar"}
 
@@ -154,7 +159,13 @@ if __name__ == "__main__":
         print("Loaded parameters from %s" % args.params_path)
     else:
         raise ValueError("Please set --params_path with correct pretrained model file")
+    save_dir = "D:\work\QiJi\qiji_compet\code\ir\softmatch\embedding_model"
+    model = model.ptm
+    model.eval()
+    save_param_path = os.path.join(save_dir, "model_state.pdparams")
+    paddle.save(model.state_dict(), save_param_path)
+    tokenizer.save_pretrained(save_dir)
 
-    results = predict(model, data, tokenizer, label_map, batch_size=args.batch_size)
-    for idx, text in enumerate(data):
-        print("Data: {} \t Label: {}".format(text, results[idx]))
+    # results = predict(model, data, tokenizer, label_map, batch_size=args.batch_size)
+    # for idx, text in enumerate(data):
+    #     print("Data: {} \t Label: {}".format(text, results[idx]))

@@ -74,12 +74,12 @@ class SentenceTransformer(nn.Layer):
                 query_token_type_ids=None,
                 query_position_ids=None,
                 query_attention_mask=None, ):
-        query_token_embedding, _ = self.ptm(
-            query_input_ids, query_token_type_ids, query_position_ids, query_attention_mask
-        )
-
-        query_mean = paddle.mean(query_token_embedding, axis=1)
-        return query_mean
+        query_token_embedding, _ = self.ptm(query_input_ids, query_token_type_ids,
+                                            query_position_ids,query_attention_mask)
+        # query_mean = paddle.mean(query_token_embedding, axis=1)
+        # print(query_token_embedding)
+        return query_token_embedding[:, 0, :]
+        # return query_mean
 
     def token_embedding(self,
                         query_input_ids,
