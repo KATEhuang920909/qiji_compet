@@ -42,10 +42,16 @@ embedding_model.eval()
 index_path = parent_path + r"\ir\softmatch\vector_index.bin"
 index = hnswlib.Index(space='cosine', dim=768)
 index.load_index(index_path)
-file_path = parent_path + r"\data\dataset\multi_cls_data\train_multi_v2.xlsx"
-data_init = pd.read_excel(file_path)
-sentences = data_init["content"].values.tolist()
-labels = data_init["label"].values.tolist()
+# file_path = parent_path + r"\data\dataset\multi_cls_data\train_multi_v2.xlsx"
+# data_init = pd.read_excel(file_path)
+# sentences = data_init["content"].values.tolist()
+# labels = data_init["label"].values.tolist()
+
+embeddings = pickle.load(open( parent_path + r"\ir\vector.pkl", "rb"))
+labels = [k["label"] for k in list(embeddings.values())]
+contents = [k for k in list(embeddings.keys())]
+
+
 print("Loaded parameters from %s" % params_path)
 
 ## chunk extract model
@@ -158,7 +164,7 @@ def Search():
     print(text)
     vector = embedding(embedding_model, text, tokenizer)
     print(len(vector[0]))
-    result = search(index, vector, sentences, labels, k)
+    result = search(index, vector, contents, labels, k)
     return result
 
 
