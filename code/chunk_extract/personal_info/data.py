@@ -37,8 +37,8 @@ def load_dataset(datafiles):
                 # 提取文本和标注
                 words, labels = line.strip('\n').split('\t')
                 # 文本中单字和标注构成的数组
-                words = words.split('\002')
-                labels = labels.split('\002')
+                words = [k.strip() for k in words.split('\002')]
+                labels = [k.strip() for k in labels.split('\002')]
                 # 迭代返回文本和标注
                 yield words, labels
 
@@ -63,6 +63,7 @@ def load_dict_single(dict_path):
         line = line.strip('\n').split(" ")
         # 设置对应的value
         for label in line:
+            label = label.strip()
             if label not in vocab:
                 vocab[label] = i
                 i += 1
