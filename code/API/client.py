@@ -44,7 +44,7 @@ import requests
 #
 #
 #
-text ='今天心情不错'
+text ='天安门事件'
 topk = 10
 url = f"http://127.0.0.1:4567/soft_match/search?text={text}&topk={topk}"
 r = requests.get(url=url)
