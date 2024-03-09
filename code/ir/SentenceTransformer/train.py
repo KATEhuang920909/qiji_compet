@@ -7,7 +7,7 @@ from functools import partial
 
 import numpy as np
 import paddle
-from model import SentenceTransformer
+from MatchModel import SentenceTransformer
 
 from paddlenlp.data import Pad, Stack, Tuple
 from paddlenlp.datasets import load_dataset
