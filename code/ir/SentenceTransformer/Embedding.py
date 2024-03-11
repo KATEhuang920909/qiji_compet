@@ -39,23 +39,18 @@ def convert_example(example, tokenizer, max_seq_length=512):
     return query_input_ids, query_token_type_ids  # , title_input_ids, title_token_type_ids
 
 
-def embedding(model, content: str, tokenizer, embedding_type="pool", batch_size=1):
+def embedding(model, content: str, tokenizer, batch_size=1):
     query_input_ids, query_token_type_ids = convert_example(content, tokenizer, max_seq_length=args.max_seq_length)
     query_input_ids = Pad(axis=0, pad_val=tokenizer.pad_token_id)([query_input_ids])
     query_token_type_ids = Pad(axis=0, pad_val=tokenizer.pad_token_type_id)([query_token_type_ids])
     query_input_ids = paddle.to_tensor(query_input_ids)
     query_token_type_ids = paddle.to_tensor(query_token_type_ids)
-    vector = model(query_input_ids, query_token_type_ids)
-    if embedding_type == "pool":
+    vector = model.pooling(query_input_ids, query_token_type_ids)
 
-        vector = vector[1].numpy().tolist()
-    elif embedding_type == "sequence":
-        vector = vector[0][1:-1].numpy().tolist()
-
-    else:
-        return {"embedding_result": "output error please choose the right embedding strategy"}
     # return {"embedding_result": result}
     return vector
+
+
 #
 if __name__ == "__main__":
     import numpy as np

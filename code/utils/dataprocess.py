@@ -60,12 +60,21 @@ class DataPostprocess:
         pass
 
     def result_merge(self,soft_match_result):
+        """
+
+
+        :param soft_match_result: {"vec_search_result": final_result,"bm25_search_result": final_result}
+        :return:
+        """
         label_score = dict()
-        label = [k[1] for k in soft_match_result if k[2] <= 0.1]
-        distance = [k[2] for k in soft_match_result if k[2] <= 0.1]
-        label_counts = Counter(label).items()
+        vec_label = [k[1] for k in soft_match_result["vec_search_result"] if k[2] <= 0.1]
+        vec_distance = [k[2] for k in soft_match_result["vec_search_result"] if k[2] <= 0.1]
+
+        bm25_label = [k[1] for k in soft_match_result["bm25_search_result"] ]
+
+        label_counts = Counter(vec_label+bm25_label).items()
         sorted_counts = sorted(label_counts, key=lambda x: x[1], reverse=True)
-        for lb, dist in zip(label, distance):
+        for lb, dist in zip(vec_label, vec_distance):
             label_score.setdefault(lb, []).append(dist)
         final_label = sorted_counts[0][0]
         final_score = sum(label_score[final_label]) / len(label_score[final_label])

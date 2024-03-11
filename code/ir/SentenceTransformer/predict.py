@@ -117,7 +117,7 @@ def predict(model, data, tokenizer, label_map, batch_size=1):
 
     results = []
     model.eval()
-    for batch in batches:
+    for batch in tqdm(batches):
         query_input_ids, query_token_type_ids, title_input_ids, title_token_type_ids = batchify_fn(batch)
 
         query_input_ids = paddle.to_tensor(query_input_ids)
@@ -130,42 +130,36 @@ def predict(model, data, tokenizer, label_map, batch_size=1):
             query_token_type_ids=query_token_type_ids,
             title_token_type_ids=title_token_type_ids,
         )
-        print(model.pooling(query_input_ids, query_token_type_ids=query_token_type_ids))
         idx = paddle.argmax(probs, axis=1).numpy()
         idx = idx.tolist()
-        labels = [label_map[i] for i in idx]
-        results.extend(labels)
+        results.extend(idx)
     return results
 
 
 if __name__ == "__main__":
+    from tqdm import tqdm
+    import pandas as pd
+    data=pd.read_excel("dev.xlsx")[["txt1","txt2","label"]][:1000]
+    test=data.values
     paddle.set_device(args.device)
 
     # ErnieTinyTokenizer is special for ernie-tiny pretained model.
     tokenizer = AutoTokenizer.from_pretrained("ernie-3.0-medium-zh")
 
-    data = [
-        ["失眠，和同月同日生的姐妹聊今年的生日party要一起办，要办睡衣趴！好期待！",
-         "NAME会员您好假期一定要旅yun行dong浮潜套装DIGIT起到店扫码更有惊喜URL回td退订"],
-    ]
     label_map = {0: "dissimilar", 1: "similar"}
 
     pretrained_model = AutoModel.from_pretrained(r"ernie-3.0-medium-zh")
     model = SentenceTransformer(pretrained_model)
-
-    if args.params_path and os.path.isfile(args.params_path):
-        state_dict = paddle.load(args.params_path)
+    params_path = "D:\work\qiji_compet\code\models\embedding_model\model_state.pdparams"
+    if params_path and os.path.isfile(params_path):
+        state_dict = paddle.load(params_path)
         model.set_dict(state_dict)
-        print("Loaded parameters from %s" % args.params_path)
+        print("Loaded parameters from %s" % params_path)
     else:
         raise ValueError("Please set --params_path with correct pretrained model file")
-    save_dir = "D:\work\QiJi\qiji_compet\code\ir\softmatch\embedding_model"
-    model = model.ptm
-    model.eval()
-    save_param_path = os.path.join(save_dir, "model_state.pdparams")
-    paddle.save(model.state_dict(), save_param_path)
-    tokenizer.save_pretrained(save_dir)
 
-    # results = predict(model, data, tokenizer, label_map, batch_size=args.batch_size)
-    # for idx, text in enumerate(data):
-    #     print("Data: {} \t Label: {}".format(text, results[idx]))
+    results = predict(model, test, tokenizer, label_map, batch_size=args.batch_size)
+    data["predict_label"]=results
+    data.to_excel("test_new.xlsx")
+    for idx, text in enumerate(test[:5]):
+        print("Data: {} \t Label: {}".format(text, results[idx]))
