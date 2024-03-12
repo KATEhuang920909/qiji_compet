@@ -1,5 +1,7 @@
 import os
 
+import pandas as pd
+
 current_path = os.getcwd()  # 获取当前路径
 parent_path = os.path.dirname(current_path)
 
@@ -10,22 +12,22 @@ class DFA:
         self.ban_words_list = list()
         self.ban_words_dict = dict()
         self.words_label = dict()  ############
-        self.path = parent_path + r'/dicts/black_list.txt'
+        # self.path = parent_path + r'/data/dicts/sensitive_dicts.xlsx'
+        self.path ="D:\work\qiji_compet\code\data\knowledge_data\sensitive_dicts.xlsx"
         self.get_words()
 
     # 获取敏感词列表
     def get_words(self):
-        with open(self.path, 'r', encoding='utf-8-sig') as f:
-            for s in f:  # --------------add-----------------
-                text = s.split("\t")
-                label, word = text[1], text[-1].strip()
-                if len(word) == 0:
-                    continue
-                else:
-                    self.words_label[word] = label
-                    if str(word) and word not in self.ban_words_set:
-                        self.ban_words_set.add(word)
-                        self.ban_words_list.append((str(word), label))
+        data_dict=pd.read_excel(self.path).values
+        for text in data_dict:
+            label, word = text[-1].strip(), text[1].strip()
+            if len(word) == 0:
+                continue
+            else:
+                self.words_label[word] = label
+                if str(word) and word not in self.ban_words_set:
+                    self.ban_words_set.add(word)
+                    self.ban_words_list.append((str(word), label))
         self.add_hash_dict(self.ban_words_list)
 
     def change_words(self, path):
@@ -152,14 +154,14 @@ class DFA:
 
     def filter_all(self, s):
         result = []
-        pos_list = list()
-        ss = DFA.draw_words(s, pos_list)
-        pos_label = self.find_illegal(ss)
+        # pos_list = list()
+        # ss = DFA.draw_words(s, pos_list)
+        pos_label = self.find_illegal(s)
         # exit()
         while pos_label and pos_label[0] != -1:
             result.append(pos_label)
-            ss = self.filter_words(ss, pos_label[0])
-            pos_label = self.find_illegal(ss)
+            s = self.filter_words(s, pos_label[0])
+            pos_label = self.find_illegal(s)
         # print(illegal_pos,ss)
         # i = 0
         # while i < len(ss):
@@ -190,12 +192,12 @@ class DFA:
 #     #     for s in f:
 #     #         text = s.split("\t")
 #     #         label, word = text[1], text[-1].strip()
-dfa = DFA()
-string = ["198964"]
-for unit in string:
-    if dfa.exists(unit) is False:
-        print(False)
-        position = []
-    else:
-        position = dfa.filter_all(unit)
-        print(position)
+# dfa = DFA()
+# string = ["198964"]
+# for unit in string:
+#     if dfa.exists(unit) is False:
+#         print(False)
+#         position = []
+#     else:
+#         position = dfa.filter_all(unit)
+#         print(position)

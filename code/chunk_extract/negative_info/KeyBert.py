@@ -38,6 +38,13 @@ def chunk_extract(text, orig):
     # result = eval(result)["embedding_result"] #doc embedding
     words_embedding_bags = []
 
+    # text = '你是谁'
+    # doc_url = f"http://127.0.0.1:4567/soft_match/text2embedding?contents={text}"
+    # r = requests.get(url=url)
+    # result_json = json.loads(r.text)
+    # print(result_json)
+
+
     pre_url = "http://127.0.0.1:4567/soft_match/text2embedding?"
     # doc embedding
     content_bag = []
@@ -59,24 +66,23 @@ def chunk_extract(text, orig):
         for con, idx in zip(content, index):
             content_bag.append({"text": "".join(orig), "chunk": con, "index": idx})
     chunk_txt = [k["chunk"] for k in content_bag]
-    for txt in chunk_txt:
-        words_url = pre_url + f"contents={txt}"
-        r = requests.get(url=words_url)
-        result_json = json.loads(r.text)
-        words_embed = result_json["embedding_result"]
-        words_embedding_bags.append(words_embed[0])
+    words_url = pre_url + f"contents={chunk_txt}"
+    r = requests.get(url=words_url)
+    result_json = json.loads(r.text)
+    words_embedding_bags = result_json["embedding_result"]
     score = np.mean(cosine_similarity(np.array(words_embedding_bags), np.array(doc_embed)), axis=1)
     for i, (text_dic, value) in enumerate(zip(content_bag, score)):
         final_result.append((text_dic["text"], text_dic["chunk"], text_dic["index"], value))
     sorted_list = sorted(final_result, key=lambda t: t[-1], reverse=True)
-    if sorted_list[0][-1] < 0.9:
-        return sorted_list[0]
-    return [(i, j) for i, j in sorted_list if j >= 0.9]
+    # if sorted_list[0][-1] < 0.9:
+    #     return sorted_list[0]
+    return sorted_list
 
 
 if __name__ == '__main__':
-    text = ".,,.[;[.],[.],.[],.["
+    text="你妈卖批哟"
     orig = text.replace(" ", "").replace("。", " ").replace("，", " ").replace("？", "").strip()
     orig = orig.split(" ")
+    chunk_result = chunk_extract(text, orig)
     # print(orig)
     print(chunk_extract(text, orig))

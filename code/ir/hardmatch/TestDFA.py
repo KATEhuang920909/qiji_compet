@@ -79,5 +79,7 @@ if __name__ == '__main__':
     # ss = dfa.find_illegal(txt)
     #
     s = "打倒中共共产党，打倒中共,这个法轮功万岁，妈卖批也。。。。"
-    print(dfa.filter_all(s))
+    temp = dfa.filter_all(s)
+    for unit in temp:
+        print(s[unit[0]:unit[1]],unit[0],unit[1])
     # print(test_filter_sentence)

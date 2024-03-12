@@ -45,8 +45,7 @@ class DataPreprocess:
                     final_text_bag.append(text)
         return final_text_bag
 
-
-    def chinese_check(self,text):
+    def chinese_check(self, text):
         zhmodel = re.compile(u'[\u4e00-\u9fa5]')  # 检查中文
         # zhmodel = re.compile(u'[^\u4e00-\u9fa5]')  #检查非中文
         match = zhmodel.search(text)
@@ -55,31 +54,29 @@ class DataPreprocess:
         else:
             return False
 
+
 class DataPostprocess:
     def __init__(self):
         pass
 
-    def result_merge(self,soft_match_result):
+    def result_merge(self, soft_match_result):
         """
 
 
         :param soft_match_result: {"vec_search_result": final_result,"bm25_search_result": final_result}
         :return:
         """
-        label_score = dict()
+
         vec_label = [k[1] for k in soft_match_result["vec_search_result"] if k[2] <= 0.1]
-        vec_distance = [k[2] for k in soft_match_result["vec_search_result"] if k[2] <= 0.1]
 
-        bm25_label = [k[1] for k in soft_match_result["bm25_search_result"] ]
+        bm25_label = [k[1] for k in soft_match_result["bm25_search_result"]]
 
-        label_counts = Counter(vec_label+bm25_label).items()
+        label_counts = Counter(vec_label + bm25_label).items()
         sorted_counts = sorted(label_counts, key=lambda x: x[1], reverse=True)
-        for lb, dist in zip(vec_label, vec_distance):
-            label_score.setdefault(lb, []).append(dist)
         final_label = sorted_counts[0][0]
-        final_score = sum(label_score[final_label]) / len(label_score[final_label])
-        return final_label, final_score
-    def output_position_text(self,text: str, position: list, prepos=0) -> str:
+        return final_label
+
+    def output_position_text(self, text: str, position: list, prepos=0) -> str:
         if position and position[0]:
             pos = position[0]
             pos[0] = pos[0] - prepos
@@ -92,11 +89,8 @@ class DataPostprocess:
             return text
         return text
 
-
-
-
 # if __name__ == '__main__':
-    # dh = DataHelper()
-    # result = dh.text_chunk("1236")
-    # print(result)
-    # print(output_position_text("行为你这种整的很我错，而且斯玛蒂第三军说的军事的v你", [[1, 3], [6, 8]]))
+# dh = DataHelper()
+# result = dh.text_chunk("1236")
+# print(result)
+# print(output_position_text("行为你这种整的很我错，而且斯玛蒂第三军说的军事的v你", [[1, 3], [6, 8]]))

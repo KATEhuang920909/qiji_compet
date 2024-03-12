@@ -19,8 +19,8 @@ import requests
 # print(result_json)
 
 # 获取向量库
-# file_path = r"D:\work\QIJI\qiji_compet\code\data\dataset\multi_cls_data\train_multi_v2.xlsx"
-# save_path = r"D:\work\QIJI\qiji_compet\code\ir\softmatch"
+# file_path = r"D:\work\qiji_compet\code\data\knowledge_data\knowledge_base.xlsx"
+# save_path = r"D:\work\qiji_compet\code\models\search_model"
 # url = fr"http://127.0.0.1:4567/soft_match/vector_update?file_path={file_path}&save_path={save_path}"
 # r = requests.get(url=url)
 # result_json = json.loads(r.text)
@@ -28,38 +28,47 @@ import requests
 # #
 # 获取索引库
 
-# save_path=r"D:\work\QIJI\qiji_compet\code\ir\vector.pkl"
+# save_path=r"D:\work\qiji_compet\code\models\search_model\vector.pkl"
 # url = f"http://127.0.0.1:4567/soft_match/index_update?vector_path={save_path}"
 # r = requests.get(url=url)
 # result_json = json.loads(r.text)
 # print(result_json)
 
 # embedding
-# text ='NAME会员您好假期一定要旅yun行dong浮潜套装DIGIT起到店扫码更有惊喜URL回td退订'
-# embedding_type="pool"
-# url = f"http://127.0.0.1:4567/soft_match/text2embedding?contents={text}&embedding_type={embedding_type}"
+# text = ['你是谁', '你', '啊']
+# url = f"http://127.0.0.1:4567/soft_match/text2embedding?contents={text}"
 # r = requests.get(url=url)
 # result_json = json.loads(r.text)
 # print(result_json)
-#
-#
-#
-text ='天安门事件'
-topk = 10
-url = f"http://127.0.0.1:4567/soft_match/search?text={text}&topk={topk}"
-r = requests.get(url=url)
+# print(len(result_json["embedding_result"]))
 
-result_json = json.loads(r.text)
-print(result_json)
+# pre_url = "http://127.0.0.1:4567/soft_match/text2embedding?"
+# # doc embedding
+# content_bag = []
+# txt="你是谁"
+# doc_url = pre_url + f"contents={txt}"
+# r = requests.get(url=doc_url)
+# result_json = json.loads(r.text)
+
+#
+#
+# text ="现在打开手机，关注微信公众号，扫码有惊喜"
+# topk = 10
+# text="中国共产党"
+# url = f"http://127.0.0.1:4567/soft_match/search?text={text}&topk={topk}"
+# r = requests.get(url=url)
+# #
+# result_json = json.loads(r.text)
+# print(result_json)
 
 # text ="你是谁qwertyuiop"
-# text ="法轮功"
-# # embedding_type="sequence"
-# url = f"http://127.0.0.1:4567/hard_match/filter?contents={text}"
-# r = requests.get(url=url)
-# print(r.text)
-# result_json = json.loads(r.text)
-# print(result_json)
+text ="你妈卖批哟，你是个大傻逼"
+# embedding_type="sequence"
+url = f"http://127.0.0.1:4567/hard_match/filter?contents={text}"
+r = requests.get(url=url)
+print(r.text)
+result_json = json.loads(r.text)
+print(result_json)
 
 
 # text ="打倒中共共产党，打倒中共,这个法轮功万岁，妈卖批也。。。。"

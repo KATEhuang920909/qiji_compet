@@ -15,12 +15,9 @@ from search import SEARCH
 import paddle
 from MatchModel import SentenceTransformer
 import pandas as pd
-import hnswlib
 from paddlenlp.transformers import ErnieTokenizer, ErnieModel
-import numpy as np
 from tqdm import tqdm
-from paddlenlp.data import Pad, Stack, Tuple
-from predict_bigru_crf import load_dict, convert_tokens_to_ids, Predictor, args
+# from predict_bigru_crf import load_dict, convert_tokens_to_ids, Predictor, args
 import pickle
 import jieba
 
@@ -29,62 +26,19 @@ current_path = os.getcwd()  # 获取当前路径
 parent_path = os.path.dirname(current_path)
 # hard match model
 dfa = DFA()
-
+search_model = SEARCH()
 ##### softmatch model
-bm25model_path = parent_path + r"\models\search_model\bm25model.pickle"
-bm25model = pickle.load(open(bm25model_path, 'rb'))
-params_path = parent_path + r"\models\embedding_model"
-tokenizer = ErnieTokenizer.from_pretrained(params_path)
-embedding_model = ErnieModel.from_pretrained(params_path)
+# bm25_model_path = parent_path + r"/models/search_model/bm25model.pickle"
+# bm25_model = pickle.load(open(bm25_model_path, 'rb'))
+# print("loaded bm25model")
+params_path = parent_path + r"/models/embedding_model/model_state.pdparams"
+tokenizer = ErnieTokenizer.from_pretrained("ernie-3.0-medium-zh")
+pretrained_model = ErnieModel.from_pretrained(r"ernie-3.0-medium-zh")
+embedding_model = SentenceTransformer(pretrained_model)
+state_dict = paddle.load(params_path)
+embedding_model.set_dict(state_dict)
 embedding_model.eval()
-
-
-def load_hnsw_model(parent_path):
-    # hnsw model
-    index_path0 = parent_path + r"\models\search_model\vector_index0.bin"
-    index0 = hnswlib.Index(space='cosine', dim=768)
-    index0.load_index(index_path0)
-
-    index_path1 = parent_path + r"\models\search_model\vector_index1.bin"
-    index1 = hnswlib.Index(space='cosine', dim=768)
-    index1.load_index(index_path1)
-
-    index_path2 = parent_path + r"\models\search_model\vector_index2.bin"
-    index2 = hnswlib.Index(space='cosine', dim=768)
-    index2.load_index(index_path2)
-
-    index_path3 = parent_path + r"\models\search_model\vector_index3.bin"
-    index3 = hnswlib.Index(space='cosine', dim=768)
-    index3.load_index(index_path3)
-
-    index_path4 = parent_path + r"\models\search_model\vector_index4.bin"
-    index4 = hnswlib.Index(space='cosine', dim=768)
-    index4.load_index(index_path4)
-    return index0, index1, index2, index3, index4
-
-
-def load_cont2lb_model(parent_path):
-    # hnsw model
-    cont2lb_path0 = parent_path + r"\models\search_model\content2label0.pickle"
-    cont2lb0 = pickle.load(open(cont2lb_path0, 'rb'))
-
-    cont2lb_path1 = parent_path + r"\models\search_model\content2label0.pickle"
-    cont2lb1 = pickle.load(open(cont2lb_path1, 'rb'))
-
-    cont2lb_path2 = parent_path + r"\models\search_model\content2label0.pickle"
-    cont2lb2 = pickle.load(open(cont2lb_path2, 'rb'))
-
-    cont2lb_path3 = parent_path + r"\models\search_model\content2label0.pickle"
-    cont2lb3 = pickle.load(open(cont2lb_path3, 'rb'))
-
-    cont2lb_path4 = parent_path + r"\models\search_model\content2label0.pickle"
-    cont2lb4 = pickle.load(open(cont2lb_path4, 'rb'))
-    return cont2lb0, cont2lb1, cont2lb2, cont2lb3, cont2lb4
-
-
-# index0, index1, index2, index3, index4 = load_hnsw_model(parent_path)
-# cont2lb0, cont2lb1, cont2lb2, cont2lb3, cont2lb4 = load_cont2lb_model(parent_path)
-# print("Loaded parameters from %s" % params_path)
+print("loaded embedding model")
 
 
 ## chunk extract model
@@ -117,7 +71,7 @@ def add_new_words():
         return '"' + string + '"已在敏感词文档中，添加失败'
     dfa.add_new_word(string, label)
     with open(dfa.path, 'a', encoding='utf-8-sig') as f:
-        f.writelines('\n' + string)
+        f.writelines('/n' + string)
     return '添加成功'
 
 
@@ -139,20 +93,30 @@ def text2embedding():
     #     text = list(eval(text.decode("unicode_escape")).values())[0]  # lists
     # else:
     text = request.args.get('contents')
+    results = []
     try:
         text = eval(text)
     except:
         pass
-    results = embedding(embedding_model, text, tokenizer)
+    assert type(text) in [list, str]
+    if type(text) == list:
+
+        for txt in text:
+            result = embedding(embedding_model, txt, tokenizer)
+            results += result
+        return {"embedding_result": results}
+
+    elif type(text) == str:
+        result = embedding(embedding_model, text, tokenizer)
+        return {"embedding_result": result}
     # print(results)
-    return results
 
 
 @app.route('/soft_match/vector_update', methods=['POST', 'GET'])
 def vector_update():
     file_path = request.args.get('file_path', '')
     save_path = request.args.get('save_path', '')
-    data = pd.read_excel(file_path)  # .sample(n=200)
+    data = pd.read_excel(file_path)
     sentences = data["content"].values.tolist()
     labels = data["label"].values.tolist()
     content_bag = []
@@ -161,7 +125,7 @@ def vector_update():
         content_bag.append({"label": lb, "vector": result[0]})
     content2embed = dict(zip(sentences, content_bag))  # {content1:{"label":,"vector":},content2:{}...}
     try:
-        pickle.dump(content2embed, open(save_path + r"\vector.pkl", "wb"))
+        pickle.dump(content2embed, open(save_path + r"/vector.pkl", "wb"))
         return {"embedding_result": "update vector successful"}
     except Exception as e:
         return {"embedding_result": str(e)}
@@ -176,11 +140,13 @@ def Index_Update():
     embeddings = [k["vector"] for k in list(embeddings_dic.values())]
 
     # 分桶更新
-    retult = SEARCH.index_update(contents, labels, embeddings)
+    result = search_model.index_update(contents, labels, embeddings)
 
-    contents_cut = [jieba.lcut(x) for x in contents]
-    retult2 = SEARCH.bm25_update(contents_cut)
-    return retult, retult2
+    # contents_cut = [jieba.lcut(x) for x in contents]
+    # result2 = search_model.bm25_update(contents_cut)
+
+    # result.update(result2)
+    return result
 
 
 @app.route('/soft_match/search', methods=['POST', 'GET'])
@@ -189,25 +155,12 @@ def Search():
     k = int(request.args.get('topk', ''))
     print(text)
     vector = embedding(embedding_model, text, tokenizer)
-    text_cut = jieba.lcut(text)
-    if 0 < len(text) <= 10:
-        vec_result = SEARCH.search_vec(index0, vector, list(cont2lb0.keys()), list(cont2lb0.values()), k)
+    text_cut = list(text)
 
-        bm25_result = SEARCH.search_bm25(bm25model, text_cut, list(cont2lb0.keys()), list(cont2lb0.values()), 5)
-    elif 10 < len(text) <= 20:
-        vec_result = SEARCH.search_vec(index0, vector, list(cont2lb1.keys()), list(cont2lb1.values()), k)
-        bm25_result = SEARCH.search_bm25(bm25model, text_cut, list(cont2lb1.keys()), list(cont2lb1.values()), 5)
-    elif 20 < len(text) <= 40:
-        vec_result = SEARCH.search_vec(index0, vector, list(cont2lb2.keys()), list(cont2lb2.values()), k)
-        bm25_result = SEARCH.search_bm25(bm25model, text_cut, list(cont2lb2.keys()), list(cont2lb2.values()), 5)
-    elif 40 < len(text) <= 100:
-        vec_result = SEARCH.search_vec(index0, vector, list(cont2lb3.keys()), list(cont2lb3.values()), k)
-        bm25_result = SEARCH.search_bm25(bm25model, text_cut, list(cont2lb3.keys()), list(cont2lb3.values()), 5)
-    else:
-        vec_result = SEARCH.search_vec(index0, vector, list(cont2lb4.keys()), list(cont2lb4.values()), k)
-        bm25_result = SEARCH.search_bm25(bm25model, text_cut, list(cont2lb4.keys()), list(cont2lb4.values()), 5)
-    vec_result.update(bm25_result)
-    return vec_result
+    search_result = search_model.search(vector, text, text_cut, k)
+    # print(search_result)
+    return search_result
+
 
 # ===============personal info extract====================
 # @app.route('/ner/person_info_check', methods=['POST', 'GET'])
