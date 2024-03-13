@@ -20,7 +20,8 @@ from tqdm import tqdm
 # from predict_bigru_crf import load_dict, convert_tokens_to_ids, Predictor, args
 import pickle
 import jieba
-
+from ernie_gru_crf.model import ErnieGRUCRF
+from ernie_gru_crf.data import label_vocab
 app = Flask(__name__)
 current_path = os.getcwd()  # 获取当前路径
 parent_path = os.path.dirname(current_path)
@@ -41,7 +42,13 @@ embedding_model.eval()
 print("loaded embedding model")
 
 
-## chunk extract model
+## ner model
+ner_model = ErnieGRUCRF(pretrained_model, 300, len(label_vocab), 100)
+params_path = parent_path + r"/models/ner_model/model_27482.pdparams"
+state_dict = paddle.load(params_path)
+ner_model.set_dict(state_dict)
+ner_model.eval()
+
 
 
 # ===============hard match====================

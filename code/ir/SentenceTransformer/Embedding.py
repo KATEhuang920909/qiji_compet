@@ -73,7 +73,8 @@ if __name__ == "__main__":
     from paddlenlp.transformers import ErnieModel, ErnieTokenizer, LinearDecayWithWarmup
     import os
     from sklearn.metrics.pairwise import cosine_similarity
-
+    import pickle
+    import pandas as pd
     paddle.set_device(args.device)
     from MatchModel import SentenceTransformer
     # ErnieTinyTokenizer is special for ernie-tiny pretained model.
@@ -85,27 +86,39 @@ if __name__ == "__main__":
     embedding_model.set_dict(state_dict)
     embedding_model.eval()
 
-    while True:
-        data1 = "我的易购我的优惠券中查询"
-        data2 = "殊不知你爹我一个不小心用力过猛一巴掌将你婊子妈的狗头拍出脑震荡成了真正的白癡"
-        data1 = input("1:")
-        query_input_ids, query_token_type_ids = convert_example(data1, tokenizer, max_seq_length=args.max_seq_length)
-        query_input_ids = Pad(axis=0, pad_val=tokenizer.pad_token_id)([query_input_ids])
-        query_token_type_ids = Pad(axis=0, pad_val=tokenizer.pad_token_type_id)([query_token_type_ids])
-        query_input_ids = paddle.to_tensor(query_input_ids)
-        query_token_type_ids = paddle.to_tensor(query_token_type_ids)
-        result1 = embedding_model.pooling(query_input_ids, query_token_type_ids)
-        print(result1)
+    data = pd.read_excel("knowledge_base.xlsx")
+    sentences = data["content"].values.tolist()
+    labels = data["label"].values.tolist()
+    content_bag = []
+    for i, (con, lb) in tqdm(enumerate(zip(sentences, labels))):
+        result = embedding(embedding_model, con, tokenizer)
+        content_bag.append({"label": lb, "vector": result[0]})
+    content2embed = dict(zip(sentences, content_bag))  # {content1:{"label":,"vector":},content2:{}...}
+    pickle.dump(content2embed, open(r"/vector.pkl", "wb"))
+    print ("embedding_result", "update vector successful")
 
-        data2 = input("2:")
-        query_input_ids, query_token_type_ids = convert_example(data2, tokenizer, max_seq_length=args.max_seq_length)
-        query_input_ids = Pad(axis=0, pad_val=tokenizer.pad_token_id)([query_input_ids])
-        query_token_type_ids = Pad(axis=0, pad_val=tokenizer.pad_token_type_id)([query_token_type_ids])
-        query_input_ids = paddle.to_tensor(query_input_ids)
-        query_token_type_ids = paddle.to_tensor(query_token_type_ids)
-        result2 = embedding_model.pooling(query_input_ids, query_token_type_ids)
-        print(result2)
-        print(cosine_similarity(result1.numpy()[0].reshape(1, -1), result2.numpy()[0].reshape(1, -1)))
+    #
+    # while True:
+    #     data1 = "我的易购我的优惠券中查询"
+    #     data2 = "殊不知你爹我一个不小心用力过猛一巴掌将你婊子妈的狗头拍出脑震荡成了真正的白癡"
+    #     data1 = input("1:")
+    #     query_input_ids, query_token_type_ids = convert_example(data1, tokenizer, max_seq_length=args.max_seq_length)
+    #     query_input_ids = Pad(axis=0, pad_val=tokenizer.pad_token_id)([query_input_ids])
+    #     query_token_type_ids = Pad(axis=0, pad_val=tokenizer.pad_token_type_id)([query_token_type_ids])
+    #     query_input_ids = paddle.to_tensor(query_input_ids)
+    #     query_token_type_ids = paddle.to_tensor(query_token_type_ids)
+    #     result1 = embedding_model.pooling(query_input_ids, query_token_type_ids)
+    #     print(result1)
+    #
+    #     data2 = input("2:")
+    #     query_input_ids, query_token_type_ids = convert_example(data2, tokenizer, max_seq_length=args.max_seq_length)
+    #     query_input_ids = Pad(axis=0, pad_val=tokenizer.pad_token_id)([query_input_ids])
+    #     query_token_type_ids = Pad(axis=0, pad_val=tokenizer.pad_token_type_id)([query_token_type_ids])
+    #     query_input_ids = paddle.to_tensor(query_input_ids)
+    #     query_token_type_ids = paddle.to_tensor(query_token_type_ids)
+    #     result2 = embedding_model.pooling(query_input_ids, query_token_type_ids)
+    #     print(result2)
+    #     print(cosine_similarity(result1.numpy()[0].reshape(1, -1), result2.numpy()[0].reshape(1, -1)))
 # FUCK 哈哈哈哈哈哈做纪念这帮逼还轻描淡写问你这办暂住证是要留着做纪念吗我纪念你ma逼啊我操
 # 9976 0.0017091036 高仿真人民币代购qq FAKE
 # 1542 0.001937449 PLACE移动尊敬的PLACE移动客户PLACE移动为您推出办流量包送最高DIGIT元红米手机一部活动多款手机任意选择无捆绑无最低消费详询移动营业厅 AD_Network_service

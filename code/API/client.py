@@ -52,23 +52,23 @@ import requests
 
 #
 #
-# text ="现在打开手机，关注微信公众号，扫码有惊喜"
-# topk = 10
+text ="尼玛我恨中国共产党啊"
+topk = 10
 # text="中国共产党"
-# url = f"http://127.0.0.1:4567/soft_match/search?text={text}&topk={topk}"
-# r = requests.get(url=url)
-# #
-# result_json = json.loads(r.text)
-# print(result_json)
-
-# text ="你是谁qwertyuiop"
-text ="你妈卖批哟，你是个大傻逼"
-# embedding_type="sequence"
-url = f"http://127.0.0.1:4567/hard_match/filter?contents={text}"
+url = f"http://127.0.0.1:4567/soft_match/search?text={text}&topk={topk}"
 r = requests.get(url=url)
-print(r.text)
+#
 result_json = json.loads(r.text)
 print(result_json)
+
+# text ="你是谁qwertyuiop"
+# text ="你妈卖批哟，你是个大傻逼"
+# # embedding_type="sequence"
+# url = f"http://127.0.0.1:4567/hard_match/filter?contents={text}"
+# r = requests.get(url=url)
+# print(r.text)
+# result_json = json.loads(r.text)
+# print(result_json)
 
 
 # text ="打倒中共共产党，打倒中共,这个法轮功万岁，妈卖批也。。。。"

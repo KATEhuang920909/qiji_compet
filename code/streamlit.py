@@ -81,14 +81,15 @@ def RUN_SOP(text: str, strategy) -> dict:  #
             final_result = {"text": text,
                             "is_illegal": hard_match_result_json["is_illegal"],
                             "position": [k[:2] for k in hard_match_result_json["position"]],
-                            "label": ",".join(set([k[-1] for k in hard_match_result_json["position"]]))}
+                            "label": ",".join(set([postprocess.illegal_map[k[-1]] for k in hard_match_result_json["position"]]))}
         else:
             if (len(text) == 1) or text.isdigit():  # 挡板
                 return final_result
             else:
                 # 软匹配（向量检索）：
+                text2=preprocess.remove_numbers(text)
                 topk = 10
-                url = f"http://127.0.0.1:4567/soft_match/search?text={text}&topk={topk}"
+                url = f"http://127.0.0.1:4567/soft_match/search?text={text2}&topk={topk}"
                 r = requests.get(url=url)
                 soft_match_result_json = json.loads(r.text)
                 final_label = postprocess.result_merge(soft_match_result_json)
@@ -121,7 +122,7 @@ def RUN_SOP(text: str, strategy) -> dict:  #
                 final_result = {"text": "".join(orig),
                                 "is_illegal": True,
                                 "position": position,
-                                "label": final_label}
+                                "label": postprocess.illegal_map[final_label]}
     elif strategy == "PRIVATE":
         pass
         # url = f"http://127.0.0.1:4567/ner/person_info_check?contents={text}"
@@ -177,7 +178,7 @@ def input_lines(contents: list, strategy):
                 final_text = postprocess.output_position_text(final_text, final_position)
                 lines += final_text
         if illegal_flag:
-            out_text = lines + f"\t:red[  -->违规，类型为{final_label}]\n"
+            out_text = lines + f"\t:red[  -->违规，类型疑似为{final_label}]\n"
             illegal_flag = False
             illegal_labels.append(final_label)
             st.write(out_text)
@@ -284,7 +285,7 @@ with table1:
             # 解析图片
 
             ocr_result = ocr.ocr(opencv_image, cls=True)
-            ocr_result = '\n'.join([line[1][0] for line in ocr_result[0]])
+            ocr_result = ''.join([line[1][0] for line in ocr_result[0]])
 
             st.write("数据预览：")
             st.write(ocr_result[:100])

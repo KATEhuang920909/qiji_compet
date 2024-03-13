@@ -9,7 +9,6 @@ import numpy as np
 from collections import Counter
 import time
 import os
-from lmir import LMIR
 import pandas as pd
 from gensim.summarization import bm25
 import pickle
@@ -50,7 +49,7 @@ class SEARCH():
         # hnsw model
         hnsw_model_bag = []
         for i in range(5):
-            index_path = parent_path + rf"/index{i}.bin"
+            index_path = parent_path + rf"/vector_index{i}.bin"
             index = hnswlib.Index(space='cosine', dim=768)
             index.load_index(index_path)
             hnsw_model_bag.append(index)

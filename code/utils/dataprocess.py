@@ -16,6 +16,13 @@ class DataPreprocess:
         else:
             return True
 
+    def remove_numbers(self, string):  # 删除数字
+        new_string = ''
+        for char in string:
+            if not char.isnumeric():
+                new_string += char
+        return new_string
+
     def text_chunk(self, content: str) -> list:  # 切分
         content = content.lower()
         content = content.replace(" ", "")
@@ -57,7 +64,25 @@ class DataPreprocess:
 
 class DataPostprocess:
     def __init__(self):
-        pass
+        self.illegal_map = {"AD_Loan": "贷款类广告",
+                            "AD_Network_service": "网络服务类广告",
+                            "AD_Other": "广告",
+                            "AD_Real_estate": "地产类广告",
+                            "AD_Retail": "销售类广告",
+                            "FR_Financial": "金融相关诈骗",
+                            "FR_Phishing": "金融钓鱼诈骗",
+                            "FR_Other": "网络诈骗",
+                            "FUCK": "辱骂",
+                            "SEX": "色情相关",
+                            "IL_Escort_service": "色情相关",
+                            "IL_Fake_ID_and_invoice": "代办、代理、代考等",
+                            "IL_Gambling": "赌博相关",
+                            "IL_Political_propaganda": "政治相关",
+                            "POLITICAL": "政治相关",
+                            "VIOLENT": "暴力、暴恐相关",
+                            "FAKE": "代办、代理、代考等",
+                            }
+        self.private_map = {}
 
     def result_merge(self, soft_match_result):
         """
@@ -90,8 +115,8 @@ class DataPostprocess:
         return text
 
 # if __name__ == '__main__':
-dp =DataPreprocess()
-dh=DataPostprocess()
-result = dp.text_chunk("1236")
-print(result)
-print(dh.output_position_text("行为你这种整的很我错，而且斯玛蒂第三军说的军事的v你", [[1, 3], [6, 8]]))
+# dp =DataPreprocess()
+# dh=DataPostprocess()
+# result = dp.text_chunk("1236")
+# print(result)
+# print(dh.output_position_text("行为你这种整的很我错，而且斯玛蒂第三军说的军事的v你", [[1, 3], [6, 8]]))
