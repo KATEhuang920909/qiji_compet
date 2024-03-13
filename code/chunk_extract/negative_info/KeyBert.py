@@ -80,7 +80,7 @@ def chunk_extract(text, orig):
 
 
 if __name__ == '__main__':
-    text="你妈卖批哟"
+    text="大年三十除夕夜家家团圆NAMENAME庭院恭祝新老业主羊年NAME阖家欢乐DIGITDIGIT绝版高层不分楼层一口价PHONE"
     orig = text.replace(" ", "").replace("。", " ").replace("，", " ").replace("？", "").strip()
     orig = orig.split(" ")
     chunk_result = chunk_extract(text, orig)

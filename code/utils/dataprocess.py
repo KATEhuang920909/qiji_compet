@@ -90,7 +90,8 @@ class DataPostprocess:
         return text
 
 # if __name__ == '__main__':
-# dh = DataHelper()
-# result = dh.text_chunk("1236")
-# print(result)
-# print(output_position_text("行为你这种整的很我错，而且斯玛蒂第三军说的军事的v你", [[1, 3], [6, 8]]))
+dp =DataPreprocess()
+dh=DataPostprocess()
+result = dp.text_chunk("1236")
+print(result)
+print(dh.output_position_text("行为你这种整的很我错，而且斯玛蒂第三军说的军事的v你", [[1, 3], [6, 8]]))

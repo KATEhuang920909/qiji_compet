@@ -133,7 +133,7 @@ class SEARCH():
         return {"bm25_search_result": final_result}
 
     def search(self, vector, text, text_cut, k):
-        bm25_result = self.search_bm25(text_cut, k)
+        bm25_result = self.search_bm25(text_cut,k)
         if 0 < len(text) <= 10:
             print("search index ,length betweem (0,10]")
             vec_result = self.search_vec(self.hnsw_model_bag[0], vector, list(self.cont2lb_bag[0].keys()),

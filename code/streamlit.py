@@ -66,6 +66,10 @@ def RUN_SOP(text: str, strategy) -> dict:  #
     # print(r.text)
     # ner_result_json = json.loads(r.text)  ## 待定
     # {'ner_result': ["('打倒中共共产党，打倒中共,这个法轮功万岁，妈卖批也。。。。', 'A1')"]}
+    final_result = {"text": text,
+                    "is_illegal": False,
+                    "position": [[]],
+                    "label": ""}
 
     if strategy == "ILLEGAL":
         # 硬匹配
@@ -80,10 +84,6 @@ def RUN_SOP(text: str, strategy) -> dict:  #
                             "label": ",".join(set([k[-1] for k in hard_match_result_json["position"]]))}
         else:
             if (len(text) == 1) or text.isdigit():  # 挡板
-                final_result = {"text": text,
-                                "is_illegal": False,
-                                "position": [],
-                                "label": []}
                 return final_result
             else:
                 # 软匹配（向量检索）：
@@ -101,10 +101,7 @@ def RUN_SOP(text: str, strategy) -> dict:  #
 
                 # 片段(短语)抽取keybert
             if final_label == "NORMAL":
-                final_result = {"text": text,
-                                "is_illegal": False,
-                                "position": [],
-                                "label": []}
+                return final_result
             else:
                 orig = text.replace(" ", "").replace("。", " ").replace("，", " ").replace("？", "").strip()
                 orig = orig.split(" ")
@@ -141,53 +138,58 @@ def RUN_SOP(text: str, strategy) -> dict:  #
 
 def input_lines(contents: list, strategy):
     assert strategy in ["ILLEGAL", "PRIVATE"]
-    if contents:
-        illegal_flag, final_flag, illegal_labels = False, False, []
-        print("contents", contents)
-        for i, info_lines in enumerate(contents):
-            lines = ""
-            if type(info_lines) == list:
-                for info in info_lines:
-                    if info:
-                        line_result = RUN_SOP(str(info), strategy)
-                        if line_result["is_illegal"]:
-                            illegal_flag = True
-                            final_position = line_result["position"]
-                            final_text = line_result["text"]
-                            final_label = line_result["label"]
-                            final_text = postprocess.output_position_text(final_text, final_position)
-                            lines += final_text
-                        else:
-                            lines += str(info) + " "
+    illegal_flag, final_flag, illegal_labels = False, False, []
+    for i, info_lines in enumerate(contents):
+        lines = ""
+        if type(info_lines) == list:
+            for info in info_lines:
+                if info:
+                    line_result = RUN_SOP(str(info), strategy)
+                    if line_result["is_illegal"]:
+                        illegal_flag = True
+                        final_position = line_result["position"]
+                        final_text = line_result["text"]
+                        final_label = line_result["label"]
+                        print("final_text", final_text)
+                        print("final_label", final_label)
+                        print("final_label", final_position)
+                        if type(final_position[0])!=list:
+                            final_position=[final_position]
+                        final_text = postprocess.output_position_text(final_text, final_position)
+                        lines += final_text
                     else:
                         lines += str(info) + " "
-            elif type(info_lines) == str and info_lines != "None":
-                print(str(info_lines))
-                line_result = RUN_SOP(str(info_lines), strategy)
-                if line_result["is_illegal"]:
-                    illegal_flag = True
-                    final_flag = True
-                    final_position = line_result["position"]
-                    final_text = line_result["text"]
-                    final_label = line_result["label"]
-                    print(final_text, final_position)
-                    final_text = postprocess.output_position_text(final_text, final_position)
-                    lines += final_text
-            if illegal_flag:
-                out_text = lines + f"\t:red[  -->违规，类型为{final_label}]\n"
-                illegal_flag = False
-                illegal_labels.append(final_label)
-                st.write(out_text)
-        if final_flag:
-            if strategy == "ILLEGAL":
-                ill_string = "、".join(set(illegal_labels))
-                st.caption("消息疑似包含{}违规信息，请核实。".format(ill_string))
-            elif strategy == "PRIVATE":
-                st.caption("消息疑似包含个人隐私，请核实。")
-        else:
-            st.caption("无敏感信息，检测通过")
+                else:
+                    lines += str(info) + " "
+
+        elif type(info_lines) == str and info_lines != "None":
+            # print(str(info_lines))
+            line_result = RUN_SOP(str(info_lines), strategy)
+            if line_result["is_illegal"]:
+                illegal_flag = True
+                final_flag = True
+                final_position = line_result["position"]
+                final_text = line_result["text"]
+                final_label = line_result["label"]
+                # print(final_text, final_position)
+                if type(final_position[0]) != list:
+                    final_position = [final_position]
+                final_text = postprocess.output_position_text(final_text, final_position)
+                lines += final_text
+        if illegal_flag:
+            out_text = lines + f"\t:red[  -->违规，类型为{final_label}]\n"
+            illegal_flag = False
+            illegal_labels.append(final_label)
+            st.write(out_text)
+    if final_flag:
+        if strategy == "ILLEGAL":
+            ill_string = "、".join(set(illegal_labels))
+            st.caption("消息疑似包含{}违规信息，请核实。".format(ill_string))
+        elif strategy == "PRIVATE":
+            st.caption("消息疑似包含个人隐私，请核实。")
     else:
-        st.caption("无有效文本信息")
+        st.caption("无敏感信息，检测通过")
+
 
 
 # 设置全局属性
@@ -319,7 +321,7 @@ with table2:
             try:
                 if name in ["xlsx", "xls"]:
                     df = pd.read_excel(uploaded_file, dtype="str")
-                    content_lines = df.values
+                    content_lines = df.values.tolist()
                     st.write("数据预览：")
                     st.write(df.head(5))
                     if len(df) >= 1:
