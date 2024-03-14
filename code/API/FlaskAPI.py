@@ -175,9 +175,10 @@ def ner_predict():
     # else:
     text = request.args.get('contents').strip()
     if text:
-        results = privateinfocheck.personal_info_check(ner_model, text, label_vocab, tokenizer)
+        results = privateinfocheck.private_info_check(text,ner_model,  label_vocab, tokenizer)
+        # results = privateinfocheck.private_info_check(text)
     print(results)
-    return {"ner_result": results}
+    return {"private_info_result": results}
 
 
 if __name__ == '__main__':

@@ -101,22 +101,31 @@ class DataPostprocess:
         final_label = sorted_counts[0][0]
         return final_label
 
-    def output_position_text(self, text: str, position: list, prepos=0) -> str:
+
+    def output_position_text(self, text: str, position: list, ) -> str:
         if position and position[0]:
-            pos = position[0]
-            pos[0] = pos[0] - prepos
-            pos[1] = pos[1] - prepos
-            print(pos)
-            text = text[:pos[0]] \
-                   + f":red[{text[pos[0]:pos[1]]}]" \
-                   + self.output_position_text(text[pos[1]:], position[1:], len(text[:pos[0]]) + pos[1] - pos[0])
+            result = []
+            current_index = 0
+            for start, end in sorted(position):
+                if start >= len(text):
+                    break
+                result.append(text[current_index:start])
+                result.append(":red[" + text[start:end] + "]")
+                current_index = end
+            result.append(text[current_index:])
+            return "".join(result)
         else:
             return text
-        return text
 
 # if __name__ == '__main__':
-# dp =DataPreprocess()
-# dh=DataPostprocess()
-# result = dp.text_chunk("1236")
-# print(result)
-# print(dh.output_position_text("行为你这种整的很我错，而且斯玛蒂第三军说的军事的v你", [[1, 3], [6, 8]]))
+# # dp =DataPreprocess()
+#     dh=DataPostprocess()
+#     # result = dp.text_chunk("1236")
+#     # print(result)
+#
+# import re
+
+
+# text="我的家在武汉市金融港，我的身份证号为420621199209094512，我的银行卡号为6217932180473316"
+# range=[[4, 7], [7, 10], [18, 36], [44, 60]]
+# print(split_by_ranges(text,range))

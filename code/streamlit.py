@@ -5,7 +5,7 @@ import cv2
 import sys
 from utils.dataprocess import DataPreprocess, DataPostprocess
 import requests
-from collections import Counter
+import re
 
 sys.path.append("./utils")
 sys.path.append("./chunk_extract/negative_info")
@@ -81,13 +81,14 @@ def RUN_SOP(text: str, strategy) -> dict:  #
             final_result = {"text": text,
                             "is_illegal": hard_match_result_json["is_illegal"],
                             "position": [k[:2] for k in hard_match_result_json["position"]],
-                            "label": ",".join(set([postprocess.illegal_map[k[-1]] for k in hard_match_result_json["position"]]))}
+                            "label": ",".join(
+                                set([postprocess.illegal_map[k[-1]] for k in hard_match_result_json["position"]]))}
         else:
             if (len(text) == 1) or text.isdigit():  # 挡板
                 return final_result
             else:
                 # 软匹配（向量检索）：
-                text2=preprocess.remove_numbers(text)
+                text2 = preprocess.remove_numbers(text)
                 topk = 10
                 url = f"http://127.0.0.1:4567/soft_match/search?text={text2}&topk={topk}"
                 r = requests.get(url=url)
@@ -124,7 +125,34 @@ def RUN_SOP(text: str, strategy) -> dict:  #
                                 "position": position,
                                 "label": postprocess.illegal_map[final_label]}
     elif strategy == "PRIVATE":
-        pass
+        url = f"http://127.0.0.1:4567/ner/private_info_check?contents={text}"
+        r = requests.get(url=url)
+        result_json = json.loads(r.text)
+        final_label, position = [], []
+        private_info = result_json["private_info_result"]
+        addr_info = private_info["AddressInfo"]
+        idcard_info = private_info["IDCardInfo"]
+        bankcard_info = private_info["BankCardInfo"]
+        if addr_info != []:
+            address = "|".join([k[0] for k in addr_info])
+            regex = r'(?:{})'.format(address)
+            res = re.finditer(regex, text)
+            _ = [position.append(list(match.span())) for match in res]
+            final_label.append("地理位置")
+        if bankcard_info != []:
+            final_label.append("银行卡")
+            for unit in bankcard_info:
+                position.append(list(unit[0]))
+        if idcard_info != []:
+            final_label.append("身份证")
+            for unit in idcard_info:
+                position.append(list(unit[0]))
+        if final_label != []:
+            final_result = {"text": text,
+                            "is_illegal": True,
+                            "position": position,
+                            "label": "、".join(final_label)}
+
         # url = f"http://127.0.0.1:4567/ner/person_info_check?contents={text}"
         # r = requests.get(url=url)
         # print(r.text)
@@ -139,6 +167,7 @@ def RUN_SOP(text: str, strategy) -> dict:  #
 
 def input_lines(contents: list, strategy):
     assert strategy in ["ILLEGAL", "PRIVATE"]
+    st.write(":grey[审核中]")
     illegal_flag, final_flag, illegal_labels = False, False, []
     for i, info_lines in enumerate(contents):
         lines = ""
@@ -148,15 +177,14 @@ def input_lines(contents: list, strategy):
                     line_result = RUN_SOP(str(info), strategy)
                     if line_result["is_illegal"]:
                         illegal_flag = True
-                        final_position = line_result["position"]
+                        final_position = sorted(line_result["position"])
                         final_text = line_result["text"]
                         final_label = line_result["label"]
-                        print("final_text", final_text)
-                        print("final_label", final_label)
-                        print("final_label", final_position)
-                        if type(final_position[0])!=list:
-                            final_position=[final_position]
+
+                        if type(final_position[0]) != list:
+                            final_position = [final_position]
                         final_text = postprocess.output_position_text(final_text, final_position)
+
                         lines += final_text
                     else:
                         lines += str(info) + " "
@@ -169,28 +197,37 @@ def input_lines(contents: list, strategy):
             if line_result["is_illegal"]:
                 illegal_flag = True
                 final_flag = True
-                final_position = line_result["position"]
+                final_position = sorted(line_result["position"])
                 final_text = line_result["text"]
                 final_label = line_result["label"]
                 # print(final_text, final_position)
                 if type(final_position[0]) != list:
                     final_position = [final_position]
+                print(final_position, final_text)
                 final_text = postprocess.output_position_text(final_text, final_position)
+                print(final_text)
                 lines += final_text
         if illegal_flag:
-            out_text = lines + f"\t:red[  -->违规，类型疑似为{final_label}]\n"
+            if strategy == "ILLEGAL":
+                out_text = str(i) + "\t" + lines + f"\t:red[  --> {final_label}]\n"
+            elif strategy == "PRIVATE":
+                out_text = str(i) + "\t" + lines + f"\t:green[  -->{final_label}]\n"
             illegal_flag = False
             illegal_labels.append(final_label)
             st.write(out_text)
+    st.write(":grey[审核完毕]")
     if final_flag:
+        ill_string = "、".join(set(illegal_labels))
         if strategy == "ILLEGAL":
-            ill_string = "、".join(set(illegal_labels))
+
             st.caption("消息疑似包含{}违规信息，请核实。".format(ill_string))
         elif strategy == "PRIVATE":
-            st.caption("消息疑似包含个人隐私，请核实。")
+            st.caption("消息疑似包含{}个人隐私，请核实。".format(ill_string))
     else:
-        st.caption("无敏感信息，检测通过")
-
+        if strategy == "ILLEGAL":
+            st.caption("无敏感信息，检测通过")
+        elif strategy == "PRIVATE":
+            st.caption("无个人隐私，检测通过")
 
 
 # 设置全局属性
@@ -251,7 +288,7 @@ with table1:
                     elif len(content_lines) > 1:  # 多行
                         st.write("数据预览：")
                         st.write(pd.DataFrame(content_lines[:5]))
-                        input_lines(content_lines, strategy="PRIVATE")
+                    input_lines(content_lines, strategy="PRIVATE")
                 elif name == "pdf":
                     pdf_reader = PdfReader(uploaded_file)
                     text = '\n\n'.join([page.extract_text() for page in pdf_reader.pages])
@@ -318,7 +355,6 @@ with table2:
         if uploaded_file is not None:
             name = uploaded_file.name.split(".")[-1]
 
-
             try:
                 if name in ["xlsx", "xls"]:
                     df = pd.read_excel(uploaded_file, dtype="str")
@@ -341,7 +377,7 @@ with table2:
                     elif len(content_lines) > 1:  # 多行
                         st.write("数据预览：")
                         st.write(pd.DataFrame(content_lines[:5]))
-                        input_lines(content_lines, strategy="ILLEGAL")
+                    input_lines(content_lines, strategy="ILLEGAL")
                 elif name == "pdf":
                     pdf_reader = PdfReader(uploaded_file)
                     text = '\n\n'.join([page.extract_text() for page in pdf_reader.pages])
@@ -381,3 +417,6 @@ with table2:
             st.write(ocr_result[:100])
             content_lines = preprocess.text_chunk(ocr_result)  # list
             input_lines(content_lines, strategy="ILLEGAL")
+
+# if __name__ == '__main__':
+#     RUN_SOP("抵制共产党", "PRIVATE")

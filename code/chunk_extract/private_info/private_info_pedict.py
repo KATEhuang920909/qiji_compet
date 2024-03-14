@@ -10,7 +10,6 @@ from paddlenlp.data import Pad, Stack
 from data import parse_decodes
 import re
 
-
 class PrivateInfoCheck():
     def __init__(self):
         self.label_vocab = {'O': 0, 'B-prov': 1, 'I-prov': 2, 'E-prov': 3, 'B-city': 4, 'I-city': 5, 'E-city': 6,
@@ -45,7 +44,6 @@ class PrivateInfoCheck():
         all_preds = []
         all_lens = []
         input_ids, seg_ids, lens = self.convert_to_features(sentence, tokenizer=tokenizer)
-
         preds = model(input_ids, seg_ids, lengths=lens)
         # Drop CLS prediction
         preds = [pred for pred in preds.numpy()]
@@ -122,48 +120,72 @@ class PrivateInfoCheck():
                         result.append([pos, id_number])
         return result
 
-    def personal_info_check(self, model, txt: str, label_vocab, tokenizer):
+    # def private_info_check(self, model, txt: str, label_vocab, tokenizer):
+    #     # 判断银行卡
+    #     bankcard_result = self.validate_bank_card_number(txt)
+    #     idcard_result = self.validate_id_card_number(txt)
+    #     address_result = self.ner_predict(model, [txt], label_vocab, tokenizer)
+    #     result = {"BankCardInfo": bankcard_result, # [pos,info]
+    #               "IDCardInfo": idcard_result,
+    #               "AddressInfo": address_result}
+    #     return result
+    def private_info_check(self, txt: str, ner_model, label_vocab, tokenizer):
         # 判断银行卡
         bankcard_result = self.validate_bank_card_number(txt)
         idcard_result = self.validate_id_card_number(txt)
-        address_result = self.ner_predict(model, [txt], label_vocab, tokenizer)
-        result = {"银行卡信息": bankcard_result,
-                  "身份证信息": idcard_result,
-                  "地址信息": address_result}
+        pattern_bankinfo = "|".join([k[1] for k in bankcard_result])
+        ner_txt = re.sub(pattern_bankinfo, "", txt, flags=re.IGNORECASE)
+        pattern_idinfo = "|".join([k[1] for k in idcard_result])
+        ner_txt = re.sub(pattern_idinfo, "", ner_txt, flags=re.IGNORECASE)
+        address_result = self.ner_predict(ner_model, [ner_txt], label_vocab, tokenizer)
+        result = {"BankCardInfo": bankcard_result,  # [pos,info]
+                  "IDCardInfo": idcard_result,
+                  "AddressInfo": address_result}
         return result
 
 
-# if __name__ == "__main__":
-#     from paddlenlp.transformers import ErnieModel, ErnieTokenizer
-#     from model import ErnieGRUCRF
-#
-#     paddle.set_device(args.device)
-#     text = ["你在上海吗，我在武汉"]
+if __name__ == "__main__":
+    from paddlenlp.transformers import ErnieModel, ErnieTokenizer
+    from ner_model import ErnieGRUCRF
+    import os
+    # import re
+    #
+    # ls = ["武汉市", "金融港"]
+    # regex = r'(?:{})'.format('|'.join(ls))
+    # text = "我的家在武汉市金融港，金融大师"
+    # res = re.finditer(regex, text)
+    # for matchs in res:
+    #     if matchs:
+    #         print(matchs.span())
+    # personalinfocheck = PrivateInfoCheck()
+    # print(personalinfocheck.extract_bank_card_numbers("我的家在武汉市金融港"))
+#     label_vocab=personalinfocheck.label_vocab
+# #     paddle.set_device(args.device)
+#     text = ["抵制共产党"]
 #     tokenizer = ErnieTokenizer.from_pretrained("ernie-3.0-medium-zh")
 #
 #     ernie = ErnieModel.from_pretrained("ernie-3.0-medium-zh")
 #
 #     model = ErnieGRUCRF(ernie, 300, len(label_vocab), 100)
-#     model.eval()
+#
 #     params_path = r"D:\work\qiji_compet\code\models\ner_model\model_27482.pdparams"
 #     if params_path and os.path.isfile(params_path):
 #         state_dict = paddle.load(params_path)
 #         model.set_dict(state_dict)
-#
-#     preds = predict(model, text, label_vocab)
+#     model.eval()
+#     preds = personalinfocheck.ner_predict(model, text, label_vocab, tokenizer)
 #     print(preds)
+#     text = '我的身份证是420606199209094512'
+#     print(personalinfocheck.validate_id_card_number(text))
 
 
-personalinfocheck = PersonalInfoCheck()
 # text = "我的银行卡号是6217932180473316，密码是123456。请注意保密。"
 # card_numbers = personalinfocheck.extract_bank_id_numbers(text)
 # print(card_numbers,[text.index(card_numbers[0]),)
 # # 示例
 
 
-text = '我的身份证是420606199094512'
-print(personalinfocheck.validate_id_card_number(text))
-#
+# #
 
 # text = "我的手机号是6217932180473316和6215593202024518113."
 # numbers =  personalinfocheck.validate_bank_card_number(text)
