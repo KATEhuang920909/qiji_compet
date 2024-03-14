@@ -1,14 +1,13 @@
-from flask import Flask, request
 import sys
-import os
 
 sys.path.append("../")
 sys.path.append("../ir/hardmatch")
 sys.path.append("../ir/SentenceTransformer")
 sys.path.append("../ir/softmatch")
-sys.path.append("../chunk_extract/personal_info")
+sys.path.append("../chunk_extract/private_info")
 sys.path.append("../ir/dicts")
-
+from flask import Flask, request
+import os
 from Embedding import embedding
 from dfa import DFA
 from search import SEARCH
@@ -17,21 +16,19 @@ from MatchModel import SentenceTransformer
 import pandas as pd
 from paddlenlp.transformers import ErnieTokenizer, ErnieModel
 from tqdm import tqdm
-# from predict_bigru_crf import load_dict, convert_tokens_to_ids, Predictor, args
 import pickle
-import jieba
-from ernie_gru_crf.model import ErnieGRUCRF
-from ernie_gru_crf.data import label_vocab
+from ner_model import ErnieGRUCRF
+from private_info_pedict import PrivateInfoCheck
+
 app = Flask(__name__)
 current_path = os.getcwd()  # 获取当前路径
 parent_path = os.path.dirname(current_path)
+
 # hard match model
 dfa = DFA()
-search_model = SEARCH()
+
 ##### softmatch model
-# bm25_model_path = parent_path + r"/models/search_model/bm25model.pickle"
-# bm25_model = pickle.load(open(bm25_model_path, 'rb'))
-# print("loaded bm25model")
+search_model = SEARCH()
 params_path = parent_path + r"/models/embedding_model/model_state.pdparams"
 tokenizer = ErnieTokenizer.from_pretrained("ernie-3.0-medium-zh")
 pretrained_model = ErnieModel.from_pretrained(r"ernie-3.0-medium-zh")
@@ -41,14 +38,14 @@ embedding_model.set_dict(state_dict)
 embedding_model.eval()
 print("loaded embedding model")
 
-
 ## ner model
+privateinfocheck = PrivateInfoCheck()
+label_vocab = privateinfocheck.label_vocab
 ner_model = ErnieGRUCRF(pretrained_model, 300, len(label_vocab), 100)
 params_path = parent_path + r"/models/ner_model/model_27482.pdparams"
 state_dict = paddle.load(params_path)
 ner_model.set_dict(state_dict)
 ner_model.eval()
-
 
 
 # ===============hard match====================
@@ -169,21 +166,18 @@ def Search():
     return search_result
 
 
-# ===============personal info extract====================
-# @app.route('/ner/person_info_check', methods=['POST', 'GET'])
-# def ner_predict():
-#     # if request.method == 'POST':
-#     #     text = request.data
-#     #     text = list(eval(text.decode("unicode_escape")).values())[0]  # lists
-#     # else:
-#     text = request.args.get('contents')
-#     if text.strip():
-#         text = text.strip()
-#         len_text = [[len(text)]]
-#
-#         results = predictor.predict([[text, len_text]], batchify_fn, word_vocab, label_vocab)
-#     print(results)
-#     return {"ner_result": results}
+# ===============private info extract====================
+@app.route('/ner/private_info_check', methods=['POST', 'GET'])
+def ner_predict():
+    # if request.method == 'POST':
+    #     text = request.data
+    #     text = list(eval(text.decode("unicode_escape")).values())[0]  # lists
+    # else:
+    text = request.args.get('contents').strip()
+    if text:
+        results = privateinfocheck.personal_info_check(ner_model, text, label_vocab, tokenizer)
+    print(results)
+    return {"ner_result": results}
 
 
 if __name__ == '__main__':

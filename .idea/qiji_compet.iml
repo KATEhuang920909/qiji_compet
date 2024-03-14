@@ -12,6 +12,7 @@
       <sourceFolder url="file://$MODULE_DIR$/code/ir" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/code/ir/hardmatch" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/code/ir/softmatch" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/code/chunk_extract/private_info" isTestSource="false" />
     </content>
     <orderEntry type="jdk" jdkName="Python 3.9" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
