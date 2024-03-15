@@ -25,7 +25,7 @@ parser.add_argument('--device', choices=['cpu', 'gpu'], default="cpu",
 args = parser.parse_args()
 
 
-def convert_example(example, tokenizer, max_seq_length=512):
+def convert_example(example, tokenizer, max_seq_length=128):
     query = example
 
     query_encoded_inputs = tokenizer(text=query, max_seq_len=max_seq_length)
@@ -40,11 +40,13 @@ def convert_example(example, tokenizer, max_seq_length=512):
 
 
 def embedding(model, content: str, tokenizer, batch_size=1):
-    query_input_ids, query_token_type_ids = convert_example(content, tokenizer, max_seq_length=args.max_seq_length)
+    query_input_ids, query_token_type_ids = convert_example(content, tokenizer, max_seq_length=128)
     query_input_ids = Pad(axis=0, pad_val=tokenizer.pad_token_id)([query_input_ids])
     query_token_type_ids = Pad(axis=0, pad_val=tokenizer.pad_token_type_id)([query_token_type_ids])
     query_input_ids = paddle.to_tensor(query_input_ids)
     query_token_type_ids = paddle.to_tensor(query_token_type_ids)
+    print("query_input_ids",query_input_ids)
+    print("query_token_type_ids",query_token_type_ids)
     vector = model.pooling(query_input_ids, query_token_type_ids)
 
     # return {"embedding_result": result}
@@ -52,73 +54,77 @@ def embedding(model, content: str, tokenizer, batch_size=1):
 
 
 #
-if __name__ == "__main__":
-    import numpy as np
-    import os
-    import paddle
-    import random
-
-
-    def seed_paddle(seed=1024):
-        seed = int(seed)
-
-        random.seed(seed)  # 设置随机函数种子
-
-        os.environ['PYTHONHASHSEED'] = str(seed)  # 设置python环境种子
-        np.random.seed(seed)  # 设置np库种子
-        paddle.seed(seed)  # 设置paddlepaddle随机种子
-
-
-    seed_paddle(seed=1024)
-    from paddlenlp.transformers import ErnieModel, ErnieTokenizer, LinearDecayWithWarmup
-    import os
-    from sklearn.metrics.pairwise import cosine_similarity
-    import pickle
-    import pandas as pd
-    paddle.set_device(args.device)
-    from MatchModel import SentenceTransformer
-    # ErnieTinyTokenizer is special for ernie-tiny pretained model.
-    params_path = "D:\work\qiji_compet\code\models\embedding_model\model_state.pdparams"
-    tokenizer = ErnieTokenizer.from_pretrained("ernie-3.0-medium-zh")
-    pretrained_model = ErnieModel.from_pretrained(r"ernie-3.0-medium-zh")
-    embedding_model = SentenceTransformer(pretrained_model)
-    state_dict = paddle.load(params_path)
-    embedding_model.set_dict(state_dict)
-    embedding_model.eval()
-
-    data = pd.read_excel("knowledge_base.xlsx")
-    sentences = data["content"].values.tolist()
-    labels = data["label"].values.tolist()
-    content_bag = []
-    for i, (con, lb) in tqdm(enumerate(zip(sentences, labels))):
-        result = embedding(embedding_model, con, tokenizer)
-        content_bag.append({"label": lb, "vector": result[0]})
-    content2embed = dict(zip(sentences, content_bag))  # {content1:{"label":,"vector":},content2:{}...}
-    pickle.dump(content2embed, open(r"/vector.pkl", "wb"))
-    print ("embedding_result", "update vector successful")
-
-    #
-    # while True:
-    #     data1 = "我的易购我的优惠券中查询"
-    #     data2 = "殊不知你爹我一个不小心用力过猛一巴掌将你婊子妈的狗头拍出脑震荡成了真正的白癡"
-    #     data1 = input("1:")
-    #     query_input_ids, query_token_type_ids = convert_example(data1, tokenizer, max_seq_length=args.max_seq_length)
-    #     query_input_ids = Pad(axis=0, pad_val=tokenizer.pad_token_id)([query_input_ids])
-    #     query_token_type_ids = Pad(axis=0, pad_val=tokenizer.pad_token_type_id)([query_token_type_ids])
-    #     query_input_ids = paddle.to_tensor(query_input_ids)
-    #     query_token_type_ids = paddle.to_tensor(query_token_type_ids)
-    #     result1 = embedding_model.pooling(query_input_ids, query_token_type_ids)
-    #     print(result1)
-    #
-    #     data2 = input("2:")
-    #     query_input_ids, query_token_type_ids = convert_example(data2, tokenizer, max_seq_length=args.max_seq_length)
-    #     query_input_ids = Pad(axis=0, pad_val=tokenizer.pad_token_id)([query_input_ids])
-    #     query_token_type_ids = Pad(axis=0, pad_val=tokenizer.pad_token_type_id)([query_token_type_ids])
-    #     query_input_ids = paddle.to_tensor(query_input_ids)
-    #     query_token_type_ids = paddle.to_tensor(query_token_type_ids)
-    #     result2 = embedding_model.pooling(query_input_ids, query_token_type_ids)
-    #     print(result2)
-    #     print(cosine_similarity(result1.numpy()[0].reshape(1, -1), result2.numpy()[0].reshape(1, -1)))
+# if __name__ == "__main__":
+#     import numpy as np
+#     import os
+#     import paddle
+#     import random
+#
+#
+#     def seed_paddle(seed=1024):
+#         seed = int(seed)
+#
+#         random.seed(seed)  # 设置随机函数种子
+#
+#         os.environ['PYTHONHASHSEED'] = str(seed)  # 设置python环境种子
+#         np.random.seed(seed)  # 设置np库种子
+#         paddle.seed(seed)  # 设置paddlepaddle随机种子
+#
+#
+#     # seed_paddle(seed=1024)
+#     from paddlenlp.transformers import ErnieModel, ErnieTokenizer, LinearDecayWithWarmup
+#     import os
+#     from sklearn.metrics.pairwise import cosine_similarity
+#     import pickle
+#     import pandas as pd
+#
+#     paddle.set_device(args.device)
+#     from MatchModel import SentenceTransformer
+#
+#     # ErnieTinyTokenizer is special for ernie-tiny pretained model.
+#     params_path = "D:\work\qiji_compet\code\models\embedding_model\model_state.pdparams"
+#     tokenizer = ErnieTokenizer.from_pretrained("ernie-3.0-medium-zh")
+#     pretrained_model = ErnieModel.from_pretrained(r"ernie-3.0-medium-zh")
+#     embedding_model = SentenceTransformer(pretrained_model)
+#     state_dict = paddle.load(params_path)
+#     embedding_model.set_dict(state_dict)
+#     embedding_model.eval()
+#
+#     # data = pd.read_excel("knowledge_base.xlsx")
+#     # sentences = data["content"].values.tolist()
+#     # labels = data["label"].values.tolist()
+#     # content_bag = []
+#     # for i, (con, lb) in tqdm(enumerate(zip(sentences, labels))):
+#     #     result = embedding(embedding_model, con, tokenizer)
+#     #     content_bag.append({"label": lb, "vector": result[0]})
+#     # content2embed = dict(zip(sentences, content_bag))  # {content1:{"label":,"vector":},content2:{}...}
+#     # pickle.dump(content2embed, open(r"/vector.pkl", "wb"))
+#     # print ("embedding_result", "update vector successful")
+#
+#     #
+#     while True:
+#         data1 = "我的易购我的优惠券中查询"
+#         data2 = "殊不知你爹我一个不小心用力过猛一巴掌将你婊子妈的狗头拍出脑震荡成了真正的白癡"
+#         data1 = input("1:")
+#         query_input_ids, query_token_type_ids = convert_example(data1, tokenizer, max_seq_length=args.max_seq_length)
+#         query_input_ids = Pad(axis=0, pad_val=tokenizer.pad_token_id)([query_input_ids])
+#         query_token_type_ids = Pad(axis=0, pad_val=tokenizer.pad_token_type_id)([query_token_type_ids])
+#         query_input_ids = paddle.to_tensor(query_input_ids)
+#         query_token_type_ids = paddle.to_tensor(query_token_type_ids)
+#         print("query_input_ids", query_input_ids)
+#         print("query_token_type_ids", query_token_type_ids)
+#         result1 = embedding_model.pooling(query_input_ids, query_token_type_ids)
+#         print(result1)
+#
+#         data2 = input("2:")
+#         query_input_ids, query_token_type_ids = convert_example(data2, tokenizer, max_seq_length=args.max_seq_length)
+#         query_input_ids = Pad(axis=0, pad_val=tokenizer.pad_token_id)([query_input_ids])
+#         query_token_type_ids = Pad(axis=0, pad_val=tokenizer.pad_token_type_id)([query_token_type_ids])
+#         query_input_ids = paddle.to_tensor(query_input_ids)
+#         query_token_type_ids = paddle.to_tensor(query_token_type_ids)
+#         result2 = embedding_model.pooling(query_input_ids, query_token_type_ids)
+#         print(result2)
+#         print(cosine_similarity(result1.numpy()[0].reshape(1, -1), result2.numpy()[0].reshape(1, -1)))
 # FUCK 哈哈哈哈哈哈做纪念这帮逼还轻描淡写问你这办暂住证是要留着做纪念吗我纪念你ma逼啊我操
 # 9976 0.0017091036 高仿真人民币代购qq FAKE
 # 1542 0.001937449 PLACE移动尊敬的PLACE移动客户PLACE移动为您推出办流量包送最高DIGIT元红米手机一部活动多款手机任意选择无捆绑无最低消费详询移动营业厅 AD_Network_service
@@ -130,4 +136,3 @@ if __name__ == "__main__":
 # 1477 0.0025632381 葛同学你睡了没啊 NORMAL
 # 7285 0.0026184916 中午买了四个山竹比特么石头还硬撬不开啊馋死我了 NORMAL
 # 8763 0.0026513934 手厅回馈老用户经典智能手机秒杀DIGIT元起只有DIGIT台每名用户限秒杀一台月日日每天点准时开抢快快登录神器手机营业厅错过就真没了客户端下载URL秒杀步骤手厅首页地区定位选择PLACE商品搜索秒杀参与秒杀PLACE联通 AD_Network_service
-

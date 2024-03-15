@@ -144,7 +144,7 @@ class PrivateInfoCheck():
         return result
 
 
-if __name__ == "__main__":
+# if __name__ == "__main__":
     from paddlenlp.transformers import ErnieModel, ErnieTokenizer
     from ner_model import ErnieGRUCRF
     import os

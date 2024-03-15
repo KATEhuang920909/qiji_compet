@@ -12,8 +12,8 @@ class DFA:
         self.ban_words_list = list()
         self.ban_words_dict = dict()
         self.words_label = dict()  ############
-        # self.path = parent_path + r'/data/dicts/sensitive_dicts.xlsx'
-        self.path ="D:\work\qiji_compet\code\data\knowledge_data\sensitive_dicts.xlsx"
+        self.path = parent_path + r'/data/dicts/sensitive_dicts.xlsx'
+        # self.path ="D:\work\qiji_compet\code\data\knowledge_data\sensitive_dicts.xlsx"
         self.get_words()
 
     # 获取敏感词列表

@@ -8,13 +8,13 @@ class DataPreprocess:
     def __init__(self):
         punctuation = en_punctuation + cn_punctuation
 
-    def check_string(self, s):
-        pattern = r'.*?[\u4e00-\u9fa5a-zA-Z\d].'  # 匹配中英文及数字的正则表达式模式
-
-        if re.match(pattern, s):
-            return False
-        else:
-            return True
+    def keep_alphanumeric(self,text):
+        # 只保留中英文及数字的正则表达式
+        pattern = re.compile(r'[\u4e00-\u9fa5a-zA-Z0-9]+')
+        # 使用正则表达式进行匹配
+        result = re.findall(pattern, text)
+        # 将匹配到的部分连接成字符串返回
+        return ''.join(result)
 
     def remove_numbers(self, string):  # 删除数字
         new_string = ''
@@ -25,15 +25,12 @@ class DataPreprocess:
 
     def text_chunk(self, content: str) -> list:  # 切分
         content = content.lower()
-        content = content.replace(" ", "")
 
-        text_bag = re.split(r"[.。?？！]", content)
+        text_bag = re.split(r"[。?？！]", content)
         final_text_bag = []
         for text in text_bag:
-            text = text.strip()
+            text  = self.keep_alphanumeric(text)
             if text == "":
-                continue
-            if self.check_string(text):
                 continue
             else:
                 if len(text) > 128:
@@ -42,8 +39,6 @@ class DataPreprocess:
                     for t in sub_text_bag:
                         t = t.strip()
                         if t == "":
-                            continue
-                        if self.check_punctuation(t):
                             continue
                         else:
                             final_sub_text_bag.append(t)
@@ -117,11 +112,11 @@ class DataPostprocess:
         else:
             return text
 
-# if __name__ == '__main__':
-# # dp =DataPreprocess()
+if __name__ == '__main__':
+    dp =DataPreprocess()
 #     dh=DataPostprocess()
-#     # result = dp.text_chunk("1236")
-#     # print(result)
+    result = dp.text_chunk(r'新\n品上市\nnewarrva\n8.8折\n早春特惠\n礼献全城\n满300送100满500送300')
+    print(result)
 #
 # import re
 

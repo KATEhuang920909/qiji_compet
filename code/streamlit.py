@@ -292,10 +292,11 @@ with table1:
                 elif name == "pdf":
                     pdf_reader = PdfReader(uploaded_file)
                     text = '\n\n'.join([page.extract_text() for page in pdf_reader.pages])
-                    if text.strip():
+                    text=text.strip()
+                    if text:
                         st.write("数据预览：")
                         st.write(text[:100])
-                        content_lines = preprocess.text_chunk(contents)  # list
+                        content_lines = preprocess.text_chunk(text)  # list
                         input_lines(content_lines, strategy="PRIVATE")
                     else:
                         st.caption("无有效文本信息")
@@ -381,10 +382,12 @@ with table2:
                 elif name == "pdf":
                     pdf_reader = PdfReader(uploaded_file)
                     text = '\n\n'.join([page.extract_text() for page in pdf_reader.pages])
-                    if text.strip():
+                    text=text.strip()
+                    if text:
                         st.write("数据预览：")
                         st.write(text[:100])
-                        content_lines = preprocess.text_chunk(contents)  # list
+                        content_lines = preprocess.text_chunk(text)  # list
+                        print(content_lines)
                         input_lines(content_lines, strategy="ILLEGAL")
                     else:
                         st.caption("无有效文本信息")
@@ -416,6 +419,7 @@ with table2:
             st.write("数据预览：")
             st.write(ocr_result[:100])
             content_lines = preprocess.text_chunk(ocr_result)  # list
+            print(content_lines)
             input_lines(content_lines, strategy="ILLEGAL")
 
 # if __name__ == '__main__':

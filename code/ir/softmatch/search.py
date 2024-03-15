@@ -113,7 +113,7 @@ class SEARCH():
     #         pickle.dump(bm25Model, f)
     #     return {"update bm25 result": "update bm25 successful"}
 
-    def search_vec(self, index_model, embedding, sentences, labels, k=10):
+    def search_vec(self,index_model, embedding, sentences, labels, k=10):
         final_result = []
         targets, distances = index_model.knn_query(embedding, k)  # K=4
         for target, distance in zip(targets[0], distances[0]):

@@ -24,15 +24,17 @@ app = Flask(__name__)
 current_path = os.getcwd()  # 获取当前路径
 parent_path = os.path.dirname(current_path)
 
+# pretrain model
+tokenizer = ErnieTokenizer.from_pretrained("ernie-3.0-medium-zh")
+pretrained_model = ErnieModel.from_pretrained(r"ernie-3.0-medium-zh").base_model
 # hard match model
 dfa = DFA()
 
 ##### softmatch model
 search_model = SEARCH()
-params_path = parent_path + r"/models/embedding_model/model_state.pdparams"
-tokenizer = ErnieTokenizer.from_pretrained("ernie-3.0-medium-zh")
-pretrained_model = ErnieModel.from_pretrained(r"ernie-3.0-medium-zh")
-embedding_model = SentenceTransformer(pretrained_model)
+match_pretrain_model = pretrained_model
+params_path = "D:\work\qiji_compet\code\models\embedding_model\model_state.pdparams"
+embedding_model = SentenceTransformer(match_pretrain_model)
 state_dict = paddle.load(params_path)
 embedding_model.set_dict(state_dict)
 embedding_model.eval()
@@ -40,11 +42,12 @@ print("loaded embedding model")
 
 ## ner model
 privateinfocheck = PrivateInfoCheck()
+ner_pretrain_model = pretrained_model
 label_vocab = privateinfocheck.label_vocab
-ner_model = ErnieGRUCRF(pretrained_model, 300, len(label_vocab), 100)
-params_path = parent_path + r"/models/ner_model/model_27482.pdparams"
-state_dict = paddle.load(params_path)
-ner_model.set_dict(state_dict)
+ner_model = ErnieGRUCRF(ner_pretrain_model, 300, len(label_vocab), 100)
+params_path2 = parent_path + r"/models/ner_model/8_model_23580.pdparams"
+state_dict2 = paddle.load(params_path2)
+ner_model.set_dict(state_dict2)
 ner_model.eval()
 
 
@@ -111,6 +114,7 @@ def text2embedding():
         return {"embedding_result": results}
 
     elif type(text) == str:
+        print(text)
         result = embedding(embedding_model, text, tokenizer)
         return {"embedding_result": result}
     # print(results)
@@ -159,6 +163,7 @@ def Search():
     k = int(request.args.get('topk', ''))
     print(text)
     vector = embedding(embedding_model, text, tokenizer)
+    print(vector)
     text_cut = list(text)
 
     search_result = search_model.search(vector, text, text_cut, k)
@@ -175,7 +180,7 @@ def ner_predict():
     # else:
     text = request.args.get('contents').strip()
     if text:
-        results = privateinfocheck.private_info_check(text,ner_model,  label_vocab, tokenizer)
+        results = privateinfocheck.private_info_check(text, ner_model, label_vocab, tokenizer)
         # results = privateinfocheck.private_info_check(text)
     print(results)
     return {"private_info_result": results}
