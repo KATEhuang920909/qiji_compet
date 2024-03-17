@@ -26,9 +26,27 @@ class PrivateInfoCheck():
         self.ID_FIND = r'\d{17}[\dX]|^\d{15}'
         self.ID_CHECK = r'^[1-9]\d{5}(18|19|20)?\d{2}(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])\d{3}(\d|[Xx])$'
         self.EXTRACT_BANK_ID = r'(?<!\d)(?:\d{16}|\d{19})(?!\d)'
+    def segment_sentence(self,sentence, vocab):
+        start = 0
+        result = []
+        while start < len(sentence):
+            # 尝试匹配最长的词汇
+            matched = False
+            for i in range(len(vocab), 0, -1):
+                word = sentence[start:start + i]
+                if word in vocab:
+                    result.append(word)
+                    start += i
+                    matched = True
+                    break
+            if not matched:
+                # 如果没有匹配到词汇，则按字符切分
+                result.append(sentence[start])
+                start += 1
+        return result
 
     def convert_to_features(self, sentence, tokenizer):
-        tokenized_input = tokenizer(sentence, return_length=True, is_split_into_words="token")
+        tokenized_input = tokenizer(sentence, return_length=True, is_split_into_words=True)
         input_ids = Pad(axis=0, pad_val=tokenizer.pad_token_id, dtype="int32")(
             [tokenized_input["input_ids"]])  # input_ids
         token_type_ids = Pad(axis=0, pad_val=tokenizer.pad_token_type_id, dtype="int32")(
@@ -44,13 +62,14 @@ class PrivateInfoCheck():
         all_preds = []
         all_lens = []
         input_ids, seg_ids, lens = self.convert_to_features(sentence, tokenizer=tokenizer)
+
         preds = model(input_ids, seg_ids, lengths=lens)
         # Drop CLS prediction
         preds = [pred for pred in preds.numpy()]
         all_preds.append(preds)
         all_lens.append(lens)
-        # sentences = [example[0] for example in ds.data]
-        results = parse_decodes(sentence, all_preds, all_lens, label_vocab)
+        sentences_token = [tokenizer.tokenize(k) for k in sentence]
+        results = parse_decodes(sentences_token, all_preds, all_lens, label_vocab)
         return results
 
     def extract_id_card_numbers(self, text):
@@ -145,23 +164,22 @@ class PrivateInfoCheck():
 
 
 # if __name__ == "__main__":
-    from paddlenlp.transformers import ErnieModel, ErnieTokenizer
-    from ner_model import ErnieGRUCRF
-    import os
-    # import re
-    #
-    # ls = ["武汉市", "金融港"]
-    # regex = r'(?:{})'.format('|'.join(ls))
-    # text = "我的家在武汉市金融港，金融大师"
-    # res = re.finditer(regex, text)
-    # for matchs in res:
-    #     if matchs:
-    #         print(matchs.span())
-    # personalinfocheck = PrivateInfoCheck()
-    # print(personalinfocheck.extract_bank_card_numbers("我的家在武汉市金融港"))
+#     from paddlenlp.transformers import ErnieModel, ErnieTokenizer
+#     from ner_model import ErnieGRUCRF
+#     import os
+#     # import re
+#     #
+#     # ls = ["武汉市", "金融港"]
+#     # regex = r'(?:{})'.format('|'.join(ls))
+#     # text = "我的家在武汉市金融港，金融大师"
+#     # res = re.finditer(regex, text)
+#     # for matchs in res:
+#     #     if matchs:
+#     #         print(matchs.span())
+#     personalinfocheck = PrivateInfoCheck()
+#     # print(personalinfocheck.extract_bank_card_numbers("我的家在武汉市金融港"))
 #     label_vocab=personalinfocheck.label_vocab
 # #     paddle.set_device(args.device)
-#     text = ["抵制共产党"]
 #     tokenizer = ErnieTokenizer.from_pretrained("ernie-3.0-medium-zh")
 #
 #     ernie = ErnieModel.from_pretrained("ernie-3.0-medium-zh")
@@ -173,23 +191,27 @@ class PrivateInfoCheck():
 #         state_dict = paddle.load(params_path)
 #         model.set_dict(state_dict)
 #     model.eval()
-#     preds = personalinfocheck.ner_predict(model, text, label_vocab, tokenizer)
-#     print(preds)
-#     text = '我的身份证是420606199209094512'
-#     print(personalinfocheck.validate_id_card_number(text))
-
-
-# text = "我的银行卡号是6217932180473316，密码是123456。请注意保密。"
-# card_numbers = personalinfocheck.extract_bank_id_numbers(text)
-# print(card_numbers,[text.index(card_numbers[0]),)
-# # 示例
-
-
-# #
-
-# text = "我的手机号是6217932180473316和6215593202024518113."
-# numbers =  personalinfocheck.validate_bank_card_number(text)
-# print(numbers)
-
-
-# # print(numbers)  # 输出: ['12345678901234567', '1234567890123456789']
+#     while True:
+#         text=input("input")
+#         # text = "053身份证号420606199209094512银行卡号6215593202024518113地址武汉市江汉区江发路9号"
+#         print(tokenizer.tokenize(text))
+#         preds = personalinfocheck.private_info_check(text,model, label_vocab, tokenizer)
+#         print(preds)
+# #     text = '我的身份证是420606199209094512'
+# #     print(personalinfocheck.validate_id_card_number(text))
+#
+#
+# # text = "我的银行卡号是6217932180473316，密码是123456。请注意保密。"
+# # card_numbers = personalinfocheck.extract_bank_id_numbers(text)
+# # print(card_numbers,[text.index(card_numbers[0]),)
+# # # 示例
+#
+#
+# # #
+#
+# # text = "我的手机号是6217932180473316和6215593202024518113."
+# # numbers =  personalinfocheck.validate_bank_card_number(text)
+# # print(numbers)
+#
+#
+# # # print(numbers)  # 输出: ['12345678901234567', '1234567890123456789']

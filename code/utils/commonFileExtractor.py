@@ -4,7 +4,7 @@ from paddleocr import PaddleOCR
 import pandas as pd
 # from docx import Document
 import time
-
+ocr = PaddleOCR(use_angle_cls=True)
 
 def path_deal(path):
     _, file_extension = os.path.splitext(path)
@@ -26,7 +26,7 @@ def Extract_Text_From_File(image):
 
     # if file_extension in ['.jpg', '.jpeg', '.png', '.bmp', '.tif', '.tiff']:
     # 处理图片文件
-    ocr = PaddleOCR(use_angle_cls=True)
+
 
     t1 = time.time()
     ocr_result = ocr.ocr(image, cls=True)
@@ -65,3 +65,6 @@ def Extract_Text_From_File(image):
 
 # text = Extract_Text_From_File('../web/广告.jpg')
 # print(text)
+while True:
+    path=input("path")
+    Extract_Text_From_File(path)

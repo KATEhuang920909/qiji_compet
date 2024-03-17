@@ -80,7 +80,7 @@ def RUN_SOP(text: str, strategy) -> dict:  #
         if hard_match_result_json['is_illegal'] is True:
             final_result = {"text": text,
                             "is_illegal": hard_match_result_json["is_illegal"],
-                            "position": [k[:2] for k in hard_match_result_json["position"]],
+                            "position": merge_intervals([k[:2] for k in hard_match_result_json["position"]]),
                             "label": ",".join(
                                 set([postprocess.illegal_map[k[-1]] for k in hard_match_result_json["position"]]))}
         else:
@@ -320,11 +320,14 @@ with table1:
             opencv_image = cv2.imdecode(file_bytes, 1)
             # 展示图片
             st.image(opencv_image, channels="BGR")
+
             # 解析图片
-
-            ocr_result = ocr.ocr(opencv_image, cls=True)
-            ocr_result = ''.join([line[1][0] for line in ocr_result[0]])
-
+            url = f"http://127.0.0.1:4567/ocr/ocr_result"
+            data={"data":opencv_image}
+            r = requests.get(url=url)
+            result_json = json.loads(r.text)
+            ocr_result =result_json["ocr_result"]
+            ocr_result=ocr.ocr(opencv_image, cls=True)
             st.write("数据预览：")
             st.write(ocr_result[:100])
             content_lines = preprocess.text_chunk(ocr_result)  # list

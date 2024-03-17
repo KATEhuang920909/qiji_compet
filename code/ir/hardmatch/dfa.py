@@ -13,12 +13,12 @@ class DFA:
         self.ban_words_dict = dict()
         self.words_label = dict()  ############
         self.path = parent_path + r'/data/dicts/sensitive_dicts.xlsx'
-        # self.path ="D:\work\qiji_compet\code\data\knowledge_data\sensitive_dicts.xlsx"
+        # self.path = "D:\work\qiji_compet\code\data\dicts\sensitive_dicts.xlsx"
         self.get_words()
 
     # 获取敏感词列表
     def get_words(self):
-        data_dict=pd.read_excel(self.path).values
+        data_dict = pd.read_excel(self.path).values
         for text in data_dict:
             label, word = text[-1].strip(), text[1].strip()
             if len(word) == 0:
@@ -154,26 +154,26 @@ class DFA:
 
     def filter_all(self, s):
         result = []
-        # pos_list = list()
-        # ss = DFA.draw_words(s, pos_list)
-        pos_label = self.find_illegal(s)
-        # exit()
-        while pos_label and pos_label[0] != -1:
-            result.append(pos_label)
-            s = self.filter_words(s, pos_label[0])
-            pos_label = self.find_illegal(s)
-        # print(illegal_pos,ss)
-        # i = 0
-        # while i < len(ss):
-        #     if ss[i] == '*':
-        #         start = pos_list[i]
-        #         while i < len(ss) and ss[i] == '*':
-        #             i += 1
-        #         i -= 1
-        #         end = pos_list[i]
-        #         num = end - start + 1
-        #         s = s[:start] + '*' * num + s[end + 1:]
-        #     i += 1
+        # pos_label = self.find_illegal(s)
+        # print(pos_label)
+        # i=0
+        # while pos_label and pos_label[0] != -1:
+        #     i+=1
+        #     result.append(pos_label)
+        #     s=self.filter_words(s, pos_label[0])
+        #     pos_label = self.find_illegal(s)
+        #     print(pos_label)
+        i = 0
+        while i < len(s)-1:
+            pos_label = self.find_illegal(s[i:])
+            if pos_label[0]!=-1:
+                print(pos_label)
+                pos_label = [pos_label[0] + i, pos_label[1] + i, pos_label[2]]
+                result.append(pos_label)
+                i=pos_label[0]+1
+            else:
+                i+=1
+
         return result
 
     @staticmethod
@@ -193,11 +193,4 @@ class DFA:
 #     #         text = s.split("\t")
 #     #         label, word = text[1], text[-1].strip()
 # dfa = DFA()
-# string = ["198964"]
-# for unit in string:
-#     if dfa.exists(unit) is False:
-#         print(False)
-#         position = []
-#     else:
-#         position = dfa.filter_all(unit)
-#         print(position)
+# print(dfa.filter_all("你妈卖批哟，你是个大傻逼"))

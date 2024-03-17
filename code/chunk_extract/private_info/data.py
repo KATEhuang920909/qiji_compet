@@ -87,7 +87,7 @@ def parse_decodes(sentences, predictions, lengths, label_vocab):
     outputs = []
     for idx, end in enumerate(lengths):
         sent = sentences[idx][:end]
-        tags = [id_label[x] for x in predictions[idx][:end]][1:]
+        tags = [id_label[x] for x in predictions[idx][1:end]]
         sent_out = []
         tags_out = []
         words = ""
@@ -106,31 +106,56 @@ def parse_decodes(sentences, predictions, lengths, label_vocab):
         if len(sent_out) < len(tags_out):
             sent_out.append(words)
         outputs.append([(s, t) for s, t in zip(sent_out, tags_out)])
-    if len(sentences) == 1:
-        return outputs[0]
+    # if len(sentences) == 1:
+    #     return outputs[0]
     return outputs
 
 
-if __name__ == '__main__':
-    label_vocab = {'O': 0, 'B-prov': 1, 'I-prov': 2, 'E-prov': 3, 'B-city': 4, 'I-city': 5, 'E-city': 6,
-                   'B-district': 7,
-                   'I-district': 8, 'E-district': 9, 'B-town': 10, 'I-town': 11, 'E-town': 12, 'B-community': 46,
-                   'I-community': 47, 'E-community': 48, 'B-poi': 16, 'E-poi': 18, 'B-road': 25, 'E-road': 27,
-                   'B-roadno': 28, 'I-roadno': 29, 'E-roadno': 30, 'I-poi': 17, 'B-assist': 40, 'E-assist': 41,
-                   'B-distance': 43, 'E-distance': 45, 'I-road': 26, 'B-intersection': 31, 'I-intersection': 32,
-                   'E-intersection': 33, 'S-assist': 42, 'B-subpoi': 19, 'I-subpoi': 20, 'E-subpoi': 21,
-                   'I-distance': 44,
-                   'I-assist': 51, 'B-houseno': 22, 'I-houseno': 23, 'E-houseno': 24, 'B-cellno': 34, 'I-cellno': 35,
-                   'E-cellno': 36, 'B-devzone': 13, 'I-devzone': 14, 'E-devzone': 15, 'B-floorno': 37, 'E-floorno': 39,
-                   'I-floorno': 38, 'S-intersection': 52, 'B-village_group': 49, 'I-village_group': 53,
-                   'E-village_group': 50,
-                   'B-raodno': 54, 'E-raodno': 55}
-
-    sentence = ["我的家在武汉市江岸区金融街25号"]
-    all_preds = []
-    all_lens = []
-    preds = [[0, 0, 0, 0, 0, 4, 5, 6, 7, 8, 9, 25, 26, 27, 28, 30, 0]]
-    all_preds.append(preds)
-    all_lens.append([17])
-    results = parse_decodes(sentence, all_preds, all_lens, label_vocab)
-    print(results)
+# if __name__ == '__main__':
+#     label_vocab = {'O': 0, 'B-prov': 1, 'I-prov': 2, 'E-prov': 3, 'B-city': 4, 'I-city': 5, 'E-city': 6,
+#                    'B-district': 7,
+#                    'I-district': 8, 'E-district': 9, 'B-town': 10, 'I-town': 11, 'E-town': 12, 'B-community': 46,
+#                    'I-community': 47, 'E-community': 48, 'B-poi': 16, 'E-poi': 18, 'B-road': 25, 'E-road': 27,
+#                    'B-roadno': 28, 'I-roadno': 29, 'E-roadno': 30, 'I-poi': 17, 'B-assist': 40, 'E-assist': 41,
+#                    'B-distance': 43, 'E-distance': 45, 'I-road': 26, 'B-intersection': 31, 'I-intersection': 32,
+#                    'E-intersection': 33, 'S-assist': 42, 'B-subpoi': 19, 'I-subpoi': 20, 'E-subpoi': 21,
+#                    'I-distance': 44,
+#                    'I-assist': 51, 'B-houseno': 22, 'I-houseno': 23, 'E-houseno': 24, 'B-cellno': 34, 'I-cellno': 35,
+#                    'E-cellno': 36, 'B-devzone': 13, 'I-devzone': 14, 'E-devzone': 15, 'B-floorno': 37, 'E-floorno': 39,
+#                    'I-floorno': 38, 'S-intersection': 52, 'B-village_group': 49, 'I-village_group': 53,
+#                    'E-village_group': 50,
+#                    'B-raodno': 54, 'E-raodno': 55}
+#
+#
+#     def segment_sentence(sentence, vocab):
+#         start = 0
+#         result = []
+#         while start < len(sentence):
+#             # 尝试匹配最长的词汇
+#             matched = False
+#             for i in range(len(vocab), 0, -1):
+#                 word = sentence[start:start + i]
+#                 if word in vocab:
+#                     result.append(word)
+#                     start += i
+#                     matched = True
+#                     break
+#             if not matched:
+#                 # 如果没有匹配到词汇，则按字符切分
+#                 result.append(sentence[start])
+#                 start += 1
+#         return result
+#
+#
+#     sentence = "武汉市江汉区江发路9号"
+#     all_preds = []
+#     all_lens = []
+#     preds = [[0, 16, 17, 17, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 5, 6, 7,
+#               8, 9, 25, 26, 27, 28, 30, 0]]
+#     all_preds.append(preds)
+#     all_lens.append([25])
+#     sentence_token = [
+#         ['05', '##3', '身', '份', '证', '号', '银', '行', '卡', '号', '地', '址', '武', '汉', '市', '江', '汉', '区',
+#          '江', '发', '路', '9', '号']]
+#     results = parse_decodes(sentence_token, all_preds, all_lens, label_vocab)
+#     print(results)

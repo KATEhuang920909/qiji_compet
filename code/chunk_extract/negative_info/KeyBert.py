@@ -74,13 +74,14 @@ def chunk_extract(text, orig):
     for i, (text_dic, value) in enumerate(zip(content_bag, score)):
         final_result.append((text_dic["text"], text_dic["chunk"], text_dic["index"], value))
     sorted_list = sorted(final_result, key=lambda t: t[-1], reverse=True)
+    print(sorted_list)
     # if sorted_list[0][-1] < 0.9:
     #     return sorted_list[0]
     return sorted_list
 
 
 if __name__ == '__main__':
-    text="大年三十除夕夜家家团圆NAMENAME庭院恭祝新老业主羊年NAME阖家欢乐DIGITDIGIT绝版高层不分楼层一口价PHONE"
+    text="你看你真是肮脏，思想极度污秽，如同粪坑里的蛆虫。"
     orig = text.replace(" ", "").replace("。", " ").replace("，", " ").replace("？", "").strip()
     orig = orig.split(" ")
     chunk_result = chunk_extract(text, orig)

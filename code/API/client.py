@@ -46,9 +46,9 @@ import requests
 # print(result_json)
 #
 #
-# text ="尼玛我恨中国共产党啊"
+text ="气死了nnd电脑就他妈的开不了机真他妈气人我都想杂了它"
 topk = 10
-text="中国共产党"
+# text="想要自杀只会有人劝你不好留下屍体以免污染环境"
 url = f"http://127.0.0.1:4567/soft_match/search?text={text}&topk={topk}"
 r = requests.get(url=url)
 #
@@ -56,7 +56,7 @@ result_json = json.loads(r.text)
 print(result_json)
 
 # text ="你是谁qwertyuiop"
-# text ="你妈卖批哟，你是个大傻逼"
+# text ="妈卖批哟，你是个大傻逼"
 # # embedding_type="sequence"
 # url = f"http://127.0.0.1:4567/hard_match/filter?contents={text}"
 # r = requests.get(url=url)

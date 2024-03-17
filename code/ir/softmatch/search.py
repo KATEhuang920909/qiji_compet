@@ -10,7 +10,7 @@ from collections import Counter
 import time
 import os
 import pandas as pd
-from gensim.summarization import bm25
+import bm25
 import pickle
 
 dim = 768
@@ -23,8 +23,8 @@ class SEARCH():
 
         path = os.getcwd()
         prepath = os.path.dirname(path)
-        self.save_path = prepath + r"\models\search_model"
-        self.knowledge_base = prepath + r"\data\knowledge_data\knowledge_base.xlsx"
+        self.save_path = prepath + r"/models/search_model"
+        self.knowledge_base = prepath + r"/data/knowledge_data/knowledge_base.xlsx"
         print("Load index from %s" % self.save_path)
         self.hnsw_model_bag = self.load_hnsw_model(self.save_path)
         # index0, index1, index2, index3, index4 = hnsw_model_bag
@@ -32,7 +32,7 @@ class SEARCH():
         print("load content label from %s" % self.save_path)
         self.cont2lb_bag = self.load_cont2lb_model(self.save_path)
         # cont2lb0, cont2lb1, cont2lb2, cont2lb3, cont2lb4 = cont2lb_bag
-        self.knowledge_base = prepath + r"\data\knowledge_data\knowledge_base.xlsx"
+        self.knowledge_base = prepath + r"/data/knowledge_data/knowledge_base.xlsx"
         knowledge = pd.read_excel(self.knowledge_base)
 
         self.knowledge_content = knowledge.content.values
@@ -41,7 +41,7 @@ class SEARCH():
         # update lmir
         contents_cut = [list(x) for x in self.knowledge_content]
         self.bm25_model = bm25.BM25(contents_cut)
-        with open(self.save_path + r'\bm25model.pickle', 'wb') as f:
+        with open(self.save_path + r'/bm25model.pickle', 'wb') as f:
             pickle.dump(self.bm25_model, f)
         print({"update bm25 result": "update bm25 successful"})
 
@@ -104,16 +104,16 @@ class SEARCH():
                 p.set_num_threads(4)
                 print("Adding first batch of %d elements" % (len(embed)))
                 p.add_items(embed, np.arange(len(embed)))
-                p.save_index(self.save_path + rf"\vector_index{i}.bin")
-                pickle.dump(cont, open(self.save_path + rf'\content2label{i}.pickle', 'wb'))
+                p.save_index(self.save_path + rf"/vector_index{i}.bin")
+                pickle.dump(cont, open(self.save_path + rf'/content2label{i}.pickle', 'wb'))
         return {"update index result": "update index successful"}
 
     # def bm25_update(self, content_cut):
-    #     with open(self.save_path + r'\bm25model.pickle', 'wb') as f:
+    #     with open(self.save_path + r'/bm25model.pickle', 'wb') as f:
     #         pickle.dump(bm25Model, f)
     #     return {"update bm25 result": "update bm25 successful"}
 
-    def search_vec(self,index_model, embedding, sentences, labels, k=10):
+    def search_vec(self, index_model, embedding, sentences, labels, k=10):
         final_result = []
         targets, distances = index_model.knn_query(embedding, k)  # K=4
         for target, distance in zip(targets[0], distances[0]):
@@ -132,7 +132,7 @@ class SEARCH():
         return {"bm25_search_result": final_result}
 
     def search(self, vector, text, text_cut, k):
-        bm25_result = self.search_bm25(text_cut,k)
+        bm25_result = self.search_bm25(text_cut, k)
         if 0 < len(text) <= 10:
             print("search index ,length betweem (0,10]")
             vec_result = self.search_vec(self.hnsw_model_bag[0], vector, list(self.cont2lb_bag[0].keys()),
@@ -160,13 +160,13 @@ class SEARCH():
         return vec_result
 
 # if __name__ == '__main__':
-# embeddings = pickle.load(open(r"D:\work\qiji_compet\code\models\search_model\vector.pkl", "rb"))
+# embeddings = pickle.load(open(r"D:/work/qiji_compet/code/models/search_model/vector.pkl", "rb"))
 # vector = [k["vector"] for k in list(embeddings.values())]
 # label = [k["label"] for k in list(embeddings.values())]
 # content = [k for k in list(embeddings.keys())]
 # num=0
-# index_path = rf"D:\work\qiji_compet\code\models\search_model\index{num}.bin"
-# cont_lb_path= rf"D:\work\qiji_compet\code\models\search_model\content2label{num}.pickle"
+# index_path = rf"D:/work/qiji_compet/code/models/search_model/index{num}.bin"
+# cont_lb_path= rf"D:/work/qiji_compet/code/models/search_model/content2label{num}.pickle"
 # p = hnswlib.Index(space='cosine', dim=768)
 # p.load_index(index_path)
 #
@@ -181,7 +181,7 @@ class SEARCH():
 # for i, (target, distance) in enumerate(zip(targets[0], distances[0])):
 #     print(target, distance, contents[target], labels[target])
 
-# parent_path = "D:\work\qiji_compet\code\models\search_model"
+# parent_path = "D:/work/qiji_compet/code/models/search_model"
 # hnsw_model_bag = load_hnsw_model(parent_path)
 # index0, index1, index2, index3, index4 = hnsw_model_bag
 # print("Loaded index  %s" % parent_path)
@@ -189,18 +189,18 @@ class SEARCH():
 # cont2lb_bag = load_cont2lb_model(parent_path)
 # cont2lb0, cont2lb1, cont2lb2, cont2lb3, cont2lb4 = cont2lb_bag
 # print("content label from %s" % parent_path)
-# index_path = rf"D:\work\qiji_compet\code\models\search_model\index0.bin"
+# index_path = rf"D:/work/qiji_compet/code/models/search_model/index0.bin"
 # p = hnswlib.Index(space='cosine', dim=768)
 # p.load_index(index_path)
 
-# knowledge_base ="D:\work\qiji_compet\code\data\knowledge_data\knowledge_base.xlsx"
+# knowledge_base ="D:/work/qiji_compet/code/data/knowledge_data/knowledge_base.xlsx"
 #
 # knowledge = pd.read_excel(knowledge_base)
 #
 # knowledge_content = knowledge.content.values
 # knowledge_label = knowledge.label.values
 
-# cont2lb_path = rf"D:\work\qiji_compet\code\models\search_model\content2label0.pickle"
+# cont2lb_path = rf"D:/work/qiji_compet/code/models/search_model/content2label0.pickle"
 # cont2lb = pickle.load(open(cont2lb_path, 'rb'))
 # contents=list(cont2lb.keys())
 # labels = list(cont2lb.values())
