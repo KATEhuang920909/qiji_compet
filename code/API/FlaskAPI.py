@@ -45,6 +45,7 @@ pretrained_model = ErnieModel.from_pretrained(r"ernie-3.0-medium-zh")
 label_vocab = privateinfocheck.label_vocab
 ner_model = ErnieGRUCRF(pretrained_model, 300, len(label_vocab), 100)
 params_path2 = parent_path + r"/models/ner_model/8_model_23580.pdparams"
+# params_path2 = parent_path + r"/models/ner_model/model_27482.pdparams"
 state_dict2 = paddle.load(params_path2)
 ner_model.set_dict(state_dict2)
 ner_model.eval()
@@ -178,6 +179,7 @@ def ner_predict():
     #     text = list(eval(text.decode("unicode_escape")).values())[0]  # lists
     # else:
     text = request.args.get('contents').strip()
+    print(text)
     if text:
         results = privateinfocheck.private_info_check(text, ner_model, label_vocab, tokenizer)
         # results = privateinfocheck.private_info_check(text)

@@ -29,7 +29,7 @@ class DataPreprocess:
         text_bag = re.split(r"[。?？！]", content)
         final_text_bag = []
         for text in text_bag:
-            text  = self.keep_alphanumeric(text)
+
             if text == "":
                 continue
             else:
@@ -112,11 +112,11 @@ class DataPostprocess:
         else:
             return text
 
-if __name__ == '__main__':
-    dp =DataPreprocess()
-#     dh=DataPostprocess()
-    result = dp.text_chunk(r'新\n品上市\nnewarrva\n8.8折\n早春特惠\n礼献全城\n满300送100满500送300')
-    print(result)
+# if __name__ == '__main__':
+#     dp =DataPreprocess()
+# #     dh=DataPostprocess()
+#     result = dp.text_chunk(r'新\n品上市\nnewarrva\n8.8折\n早春特惠\n礼献全城\n满300送100满500送300')
+#     print(result)
 #
 # import re
 

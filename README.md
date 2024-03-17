@@ -1,3 +1,0 @@
-# qiji_compet
-
-test

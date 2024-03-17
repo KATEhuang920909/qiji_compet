@@ -66,6 +66,7 @@ class PrivateInfoCheck():
         preds = model(input_ids, seg_ids, lengths=lens)
         # Drop CLS prediction
         preds = [pred for pred in preds.numpy()]
+        print(preds )
         all_preds.append(preds)
         all_lens.append(lens)
         sentences_token = [tokenizer.tokenize(k) for k in sentence]
@@ -167,15 +168,15 @@ class PrivateInfoCheck():
 #     from paddlenlp.transformers import ErnieModel, ErnieTokenizer
 #     from ner_model import ErnieGRUCRF
 #     import os
-#     # import re
-#     #
-#     # ls = ["武汉市", "金融港"]
-#     # regex = r'(?:{})'.format('|'.join(ls))
-#     # text = "我的家在武汉市金融港，金融大师"
-#     # res = re.finditer(regex, text)
-#     # for matchs in res:
-#     #     if matchs:
-#     #         print(matchs.span())
+# #     # import re
+# #     #
+# #     # ls = ["武汉市", "金融港"]
+# #     # regex = r'(?:{})'.format('|'.join(ls))
+# #     # text = "我的家在武汉市金融港，金融大师"
+# #     # res = re.finditer(regex, text)
+# #     # for matchs in res:
+# #     #     if matchs:
+# #     #         print(matchs.span())
 #     personalinfocheck = PrivateInfoCheck()
 #     # print(personalinfocheck.extract_bank_card_numbers("我的家在武汉市金融港"))
 #     label_vocab=personalinfocheck.label_vocab
@@ -186,19 +187,19 @@ class PrivateInfoCheck():
 #
 #     model = ErnieGRUCRF(ernie, 300, len(label_vocab), 100)
 #
-#     params_path = r"D:\work\qiji_compet\code\models\ner_model\model_27482.pdparams"
+#     params_path = r"D:\work\qiji_compet\code\models\ner_model\8_model_23580.pdparams"
 #     if params_path and os.path.isfile(params_path):
 #         state_dict = paddle.load(params_path)
 #         model.set_dict(state_dict)
 #     model.eval()
 #     while True:
 #         text=input("input")
-#         # text = "053身份证号420606199209094512银行卡号6215593202024518113地址武汉市江汉区江发路9号"
+# #         # text = "053身份证号420606199209094512银行卡号6215593202024518113地址武汉市江汉区江发路9号"
 #         print(tokenizer.tokenize(text))
 #         preds = personalinfocheck.private_info_check(text,model, label_vocab, tokenizer)
 #         print(preds)
-# #     text = '我的身份证是420606199209094512'
-# #     print(personalinfocheck.validate_id_card_number(text))
+#     text = '我的身份证是420606199209094512'
+#     print(personalinfocheck.validate_id_card_number(text))
 #
 #
 # # text = "我的银行卡号是6217932180473316，密码是123456。请注意保密。"

@@ -73,6 +73,7 @@ def RUN_SOP(text: str, strategy) -> dict:  #
 
     if strategy == "ILLEGAL":
         # 硬匹配
+        text = preprocess.keep_alphanumeric(text)
         url = f"http://127.0.0.1:4567/hard_match/filter?contents={text}"
         r = requests.get(url=url)
         hard_match_result_json = json.loads(r.text)
@@ -125,6 +126,7 @@ def RUN_SOP(text: str, strategy) -> dict:  #
                                 "position": position,
                                 "label": postprocess.illegal_map[final_label]}
     elif strategy == "PRIVATE":
+        print("text",text)
         url = f"http://127.0.0.1:4567/ner/private_info_check?contents={text}"
         r = requests.get(url=url)
         result_json = json.loads(r.text)
@@ -133,7 +135,8 @@ def RUN_SOP(text: str, strategy) -> dict:  #
         addr_info = private_info["AddressInfo"]
         idcard_info = private_info["IDCardInfo"]
         bankcard_info = private_info["BankCardInfo"]
-        if addr_info != [] :
+
+        if addr_info != [[]]:
             address = "|".join([k[0] for k in addr_info[0]])
             regex = r'(?:{})'.format(address)
             res = re.finditer(regex, text)
@@ -203,15 +206,15 @@ def input_lines(contents: list, strategy):
                 # print(final_text, final_position)
                 if type(final_position[0]) != list:
                     final_position = [final_position]
-                print(final_position, final_text)
+                # print(final_position, final_text)
                 final_text = postprocess.output_position_text(final_text, final_position)
-                print(final_text)
+                # print(final_text)
                 lines += final_text
         if illegal_flag:
             if strategy == "ILLEGAL":
-                out_text = str(i+1) + "\t" + lines + f"\t:red[  --> {final_label}]\n"
+                out_text = str(i + 1) + "\t" + lines + f"\t:red[  --> {final_label}]\n"
             elif strategy == "PRIVATE":
-                out_text = str(i+1) + "\t" + lines + f"\t:green[  -->{final_label}]\n"
+                out_text = str(i + 1) + "\t" + lines + f"\t:green[  -->{final_label}]\n"
             illegal_flag = False
             illegal_labels.append(final_label)
             st.write(out_text)
@@ -232,12 +235,12 @@ def input_lines(contents: list, strategy):
 
 # 设置全局属性
 st.set_page_config(
-    page_title='5G消息敏感信息监测系统demo',
+    page_title='5G敏感信息监测系统demo',
     page_icon=' ',
     layout='wide'
 )
 # 正文
-st.title('5G消息敏感信息监测系统demo')
+st.title('5G敏感信息监测系统demo')
 table1, table2 = st.tabs(['个人隐私检测', '不良信息检测'])
 with table1:
     tab1, tab2, tab3 = st.tabs(['文本', '文档', '图片'])
